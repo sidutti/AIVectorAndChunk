@@ -1,0 +1,15 @@
+{
+  "editor.fontFamily": "'Source Control Pro','Droid Sans Mono', 'monospace', monospace",
+  "editor.fontSize": 24,
+  "editor.fontVariations": false,
+  "debug.console.fontSize": 24,
+  "scm.inputFontSize": 24,
+  "terminal.integrated.fontSize": 18,
+  "markdown.preview.fontSize": 24,
+  "editor.suggestFontSize": 24,
+  "editor.minimap.sectionHeaderFontSize": 24,
+  "editor.inlayHints.fontSize": 24,
+  "editor.codeLensFontSize": 24,
+  "editor.inlineSuggest.fontFamily": "'Source Control Pro','Droid Sans Mono', 'monospace', monospace",
+  "scm.inputFontFamily": "'Source Control Pro','Droid Sans Mono', 'monospace', monospace"
+}

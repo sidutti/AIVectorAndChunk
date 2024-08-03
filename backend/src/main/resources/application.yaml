@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: sidutti
+  ai:
+    ollama:
+      chat:
+        model: mathstral
+      embedding:
+        model: mathstral
+  data:
+    mongodb:
+      uri: mongodb+srv://sidutti:1JtigZAmA4WeNOuM@sidchar.anzbaom.mongodb.net/?retryWrites=true&w=majority&appName=sidchar
+      database: sample_training
+      auto-index-creation: true
+
