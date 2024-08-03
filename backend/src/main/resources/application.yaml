@@ -2,6 +2,12 @@ spring:
   application:
     name: sidutti
   ai:
+    vectorstore:
+      mongodb:
+        initialize-schema: false
+        collection-name: document
+        index-name: vector_index
+        path-name: embedding
     ollama:
       chat:
         model: mathstral
