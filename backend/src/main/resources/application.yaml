@@ -8,6 +8,8 @@ spring:
         collection-name: document
         index-name: vector_index
         path-name: embedding
+      elasticsearch:
+        dimensions: 4096
     ollama:
       chat:
         model: mathstral
@@ -18,4 +20,8 @@ spring:
       uri: mongodb+srv://sidutti:1JtigZAmA4WeNOuM@sidchar.anzbaom.mongodb.net/?retryWrites=true&w=majority&appName=sidchar
       database: sample_training
       auto-index-creation: true
+  elasticsearch:
+    password: ElasticAdminPassword
+    uris: http://192.168.1.84:30003/
+    username: elastic
 

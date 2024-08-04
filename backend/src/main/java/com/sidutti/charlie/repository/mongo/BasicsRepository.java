@@ -1,4 +1,4 @@
-package com.sidutti.charlie.repository;
+package com.sidutti.charlie.repository.mongo;
 
 import com.sidutti.charlie.model.Basics;
 import org.bson.types.ObjectId;

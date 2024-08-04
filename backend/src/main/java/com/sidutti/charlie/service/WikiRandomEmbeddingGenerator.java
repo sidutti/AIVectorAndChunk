@@ -4,9 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.wiki.RandomWikiPage;
-import com.sidutti.charlie.repository.DocumentRepository;
-import com.sidutti.charlie.vector.mongo.MongoDBAtlasVectorStore;
-import org.bson.types.ObjectId;
+import com.sidutti.charlie.repository.elastic.ElasticDocumentRepository;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,16 +14,18 @@ import reactor.core.publisher.Mono;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class WikiRandomEmbeddingGenerator {
-        private final MongoDBAtlasVectorStore vectorStore;
+        private final EmbeddingModel model;
+
         private final WebClient webClient;
         private final ObjectMapper objectMapper;
-        private final DocumentRepository documentRepository;
+        private final ElasticDocumentRepository documentRepository;
 
-        public WikiRandomEmbeddingGenerator(MongoDBAtlasVectorStore vectorStore, WebClient webClient, ObjectMapper objectMapper, DocumentRepository documentRepository) {
-                this.vectorStore = vectorStore;
+        public WikiRandomEmbeddingGenerator(EmbeddingModel model, WebClient webClient, ObjectMapper objectMapper, ElasticDocumentRepository documentRepository) {
+                this.model = model;
                 this.webClient = webClient;
                 this.objectMapper = objectMapper;
                 this.documentRepository = documentRepository;
@@ -55,9 +56,8 @@ public class WikiRandomEmbeddingGenerator {
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("title", randomWikiPage.getTitle());
                 metadata.put("description", randomWikiPage.getDescription());
-                org.springframework.ai.document.Document document = new org.springframework.ai.document.Document(randomWikiPage.getExtract(), metadata);
-                List<Double> embedding = vectorStore.generateEmbeddings(document);
-                Document doc = new Document(new ObjectId(), metadata, randomWikiPage.getExtract(), embedding);
+                List<Double> embedding = model.embed(randomWikiPage.getExtract());
+                Document doc = new Document(UUID.randomUUID().toString(), metadata, randomWikiPage.getExtract(), embedding);
                 return documentRepository.save(doc);
         }
 

@@ -1,7 +1,7 @@
 package com.sidutti.charlie.controller;
 
 import com.sidutti.charlie.model.Basics;
-import com.sidutti.charlie.repository.BasicsRepository;
+import com.sidutti.charlie.repository.mongo.BasicsRepository;
 import com.sidutti.charlie.service.FileReaderService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

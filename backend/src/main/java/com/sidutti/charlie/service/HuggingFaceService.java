@@ -2,27 +2,28 @@ package com.sidutti.charlie.service;
 
 import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.Root;
-import com.sidutti.charlie.repository.DocumentRepository;
-import com.sidutti.charlie.vector.mongo.MongoDBAtlasVectorStore;
-import org.bson.types.ObjectId;
+import com.sidutti.charlie.repository.elastic.ElasticDocumentRepository;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class HuggingFaceService {
-        private final MongoDBAtlasVectorStore vectorStore;
+        private final EmbeddingModel model;
         private final WebClient webClient;
 
-        private final DocumentRepository documentRepository;
+        private final ElasticDocumentRepository documentRepository;
 
-        public HuggingFaceService(MongoDBAtlasVectorStore vectorStore, WebClient webClient, DocumentRepository documentRepository) {
-                this.vectorStore = vectorStore;
+        public HuggingFaceService(EmbeddingModel model, WebClient webClient, ElasticDocumentRepository documentRepository) {
+                this.model = model;
                 this.webClient = webClient;
                 this.documentRepository = documentRepository;
         }
@@ -48,7 +49,9 @@ public class HuggingFaceService {
                                 .flatMapIterable(list -> list)
                                 .doOnError(Throwable::printStackTrace)
                                 .map(this::createDocument)
-                                .flatMap(documentRepository::save);
+                                .flatMap(documentRepository::save)
+                                .onErrorResume(e-> Mono.just(new Document("",null,"",null)))
+                                ;
         }
 
 
@@ -57,9 +60,7 @@ public class HuggingFaceService {
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("title", rootRow.row().output());
                 metadata.put("description", rootRow.row().instruction());
-                org.springframework.ai.document.Document document = new org.springframework.ai.document.Document(finalValue, metadata);
-                List<Double> embedding = vectorStore.generateEmbeddings(document);
-                return new Document(new ObjectId(), metadata, finalValue, embedding);
-
+                List<Double> embedding = model.embed(finalValue);
+                return new Document(UUID.randomUUID().toString(), metadata, finalValue, embedding);
         }
 }
