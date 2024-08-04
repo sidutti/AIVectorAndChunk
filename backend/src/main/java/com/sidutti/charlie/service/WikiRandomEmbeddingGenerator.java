@@ -23,11 +23,12 @@ public class WikiRandomEmbeddingGenerator {
         private final ObjectMapper objectMapper;
         private final DocumentRepository documentRepository;
 
-        public WikiRandomEmbeddingGenerator(MongoDBAtlasVectorStore vectorStore, WebClient webClient, DocumentRepository documentRepository) {
+        public WikiRandomEmbeddingGenerator(MongoDBAtlasVectorStore vectorStore, WebClient webClient, ObjectMapper objectMapper, DocumentRepository documentRepository) {
                 this.vectorStore = vectorStore;
                 this.webClient = webClient;
+                this.objectMapper = objectMapper;
                 this.documentRepository = documentRepository;
-                this.objectMapper = new ObjectMapper();
+
         }
 
         public Mono<Document> generateRandomEmbedding() {

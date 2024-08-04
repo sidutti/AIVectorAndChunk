@@ -20,15 +20,27 @@ public class HuggingFaceService {
         private final WebClient webClient;
 
         private final DocumentRepository documentRepository;
+
         public HuggingFaceService(MongoDBAtlasVectorStore vectorStore, WebClient webClient, DocumentRepository documentRepository) {
                 this.vectorStore = vectorStore;
                 this.webClient = webClient;
                 this.documentRepository = documentRepository;
         }
+
         public Flux<Document> createEmbeddingsFromHuggingFace(int pageNumber, int numberOfRows) {
                 return webClient
                                 .get()
-                                .uri("https://datasets-server.huggingface.co/rows?dataset=ibivibiv%2Fmath_instruct&config=default&split=train&offset="+pageNumber+"&length="+numberOfRows)
+                                .uri(uriBuilder ->
+
+                                                uriBuilder.host("datasets-server.huggingface.co")
+                                                                .scheme("https")
+                                                                .path("rows")
+                                                                .queryParam("dataset", "ibivibiv/math_instruct")
+                                                                .queryParam("config", "default")
+                                                                .queryParam("split", "train")
+                                                                .queryParam("offset", pageNumber)
+                                                                .queryParam("length", numberOfRows)
+                                                                .build())
                                 .accept(MediaType.APPLICATION_JSON)
                                 .retrieve()
                                 .bodyToMono(Root.class)
@@ -38,6 +50,8 @@ public class HuggingFaceService {
                                 .map(this::createDocument)
                                 .flatMap(documentRepository::save);
         }
+
+
         private Document createDocument(Root.RootRow rootRow) {
                 String finalValue = rootRow.row().instruction().concat(rootRow.row().output());
                 Map<String, Object> metadata = new HashMap<>();
@@ -45,7 +59,7 @@ public class HuggingFaceService {
                 metadata.put("description", rootRow.row().instruction());
                 org.springframework.ai.document.Document document = new org.springframework.ai.document.Document(finalValue, metadata);
                 List<Double> embedding = vectorStore.generateEmbeddings(document);
-               return new Document(new ObjectId(), metadata, finalValue, embedding);
+                return new Document(new ObjectId(), metadata, finalValue, embedding);
 
         }
 }

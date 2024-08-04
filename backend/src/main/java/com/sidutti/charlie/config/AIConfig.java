@@ -1,5 +1,6 @@
 package com.sidutti.charlie.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.autoconfigure.ollama.OllamaChatProperties;
 import org.springframework.ai.autoconfigure.ollama.OllamaConnectionDetails;
 import org.springframework.ai.autoconfigure.ollama.OllamaConnectionProperties;
@@ -67,27 +68,8 @@ public class AIConfig {
                 }
 
         }
-       /* @Bean
-        public Converter<MimeType, String> mimeTypeToStringConverter() {
-                return MimeType::toString;
-        }
-
-        @Bean
-        public Converter<String, MimeType> stringToMimeTypeConverter() {
-                return MimeType::valueOf;
-        }
-
-        @Bean
-        public BeanPostProcessor mongoCustomConversionsPostProcessor() {
-                return new BeanPostProcessor() {
-                        @Override
-                        public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-                                if (bean instanceof MongoCustomConversions) {
-                                        return new MongoCustomConversions(
-                                                        Arrays.asList(mimeTypeToStringConverter(), stringToMimeTypeConverter()));
-                                }
-                                return bean;
-                        }
-                };
-        }*/
+     @Bean
+        public ObjectMapper objectMapper(){
+                return new ObjectMapper();
+     }
 }
