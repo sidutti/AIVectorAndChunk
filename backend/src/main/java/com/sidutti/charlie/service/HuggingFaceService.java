@@ -28,7 +28,7 @@ public class HuggingFaceService {
                 this.documentRepository = documentRepository;
         }
 
-        public Flux<Document> createEmbeddingsFromHuggingFace(int pageNumber, int numberOfRows) {
+        public Flux<Document> createEmbeddingsFromHuggingFace(int pageNumber, int numberOfRows, String dataset) {
                 return webClient
                                 .get()
                                 .uri(uriBuilder ->
@@ -36,7 +36,7 @@ public class HuggingFaceService {
                                                 uriBuilder.host("datasets-server.huggingface.co")
                                                                 .scheme("https")
                                                                 .path("rows")
-                                                                .queryParam("dataset", "ibivibiv/math_instruct")
+                                                                .queryParam("dataset", dataset)
                                                                 .queryParam("config", "default")
                                                                 .queryParam("split", "train")
                                                                 .queryParam("offset", pageNumber)

@@ -9,12 +9,12 @@ spring:
         index-name: vector_index
         path-name: embedding
       elasticsearch:
-        dimensions: 4096
+        dimensions: 768
     ollama:
       chat:
-        model: mathstral
+        model: llama3
       embedding:
-        model: mathstral
+        model: nomic-embed-text
   data:
     mongodb:
       uri: mongodb+srv://sidutti:1JtigZAmA4WeNOuM@sidchar.anzbaom.mongodb.net/?retryWrites=true&w=majority&appName=sidchar
@@ -24,4 +24,3 @@ spring:
     password: ElasticAdminPassword
     uris: http://192.168.1.84:30003/
     username: elastic
-

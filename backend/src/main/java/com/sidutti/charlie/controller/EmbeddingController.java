@@ -15,7 +15,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
-
+//enable cors for enabling cors
+@CrossOrigin(origins = "*")
 @RestController
 public class EmbeddingController {
         private final EmbeddingModel embeddingModel;
@@ -46,7 +47,16 @@ public class EmbeddingController {
         @GetMapping("/ai/math/embedding/start")
         public Flux<Document> startMathEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
                                                  @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
-                return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize);
+                long start =System.currentTimeMillis();
+                return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize, "ibivibiv/math_instruct")
+                        .doFinally(a-> System.out.println("Finance Embedding finished : "+(System.currentTimeMillis()-start)+"ms"));
+        }
+        @GetMapping("/ai/finance/embedding/start")
+        public Flux<Document> startFinanceEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
+                                                 @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+                long start =System.currentTimeMillis();
+                return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize, "DeividasM/financial-instruction-aq22")
+                        .doFinally(a-> System.out.println("Finance Embedding finished : "+(System.currentTimeMillis()-start)+"ms"));
         }
         @PostMapping("ai/embedding/search")
         public Flux<SearchResults> searchEmbedding(@RequestBody String query) {
@@ -54,7 +64,9 @@ public class EmbeddingController {
                                 .withQuery(query)
                                 .withTopK(10)
                                 .withSimilarityThreshold(SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL);
-                return searchService.similaritySearch(searchRequest);
+                long start =System.currentTimeMillis();
+                return searchService.similaritySearch(searchRequest)
+                        .doFinally(a-> System.out.println("Finance Embedding finished : "+(System.currentTimeMillis()-start)+"ms"));
         }
 
 
