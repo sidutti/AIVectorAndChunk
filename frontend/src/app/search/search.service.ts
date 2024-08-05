@@ -2,14 +2,14 @@ import {HttpClient} from "@angular/common/http";
 import {Injectable} from "@angular/core";
 
 import {Observable} from "rxjs";
-import {Questions} from "./question";
+import {Response} from "./response";
 
 @Injectable()
 export class SearchService {
-  constructor(private http: HttpClient) {
-  }
+      constructor(private http: HttpClient) {
+      }
 
-  search(id: Questions): Observable<string> {
-    return this.http.post(`http://localhost:11434/api/chat`, id, {responseType: 'text'});
-  }
+      search(id: String): Observable<Response> {
+            return this.http.post<Response>(`http://localhost:8080/ai/embedding/search`, id, {responseType: 'json'});
+      }
 }

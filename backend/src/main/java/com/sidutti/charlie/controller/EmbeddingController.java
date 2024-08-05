@@ -9,9 +9,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -50,13 +48,14 @@ public class EmbeddingController {
                                                  @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
                 return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize);
         }
-        @GetMapping("ai/embedding/search")
-        public Flux<SearchResults> searchEmbedding(@RequestParam(value = "query") String query) {
+        @PostMapping("ai/embedding/search")
+        public Flux<SearchResults> searchEmbedding(@RequestBody String query) {
                 SearchRequest searchRequest = SearchRequest.defaults()
                                 .withQuery(query)
                                 .withTopK(10)
                                 .withSimilarityThreshold(SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL);
                 return searchService.similaritySearch(searchRequest);
         }
+
 
 }

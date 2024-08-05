@@ -50,8 +50,7 @@ public class HuggingFaceService {
                                 .doOnError(Throwable::printStackTrace)
                                 .map(this::createDocument)
                                 .flatMap(documentRepository::save)
-                                .onErrorResume(e-> Mono.just(new Document("",null,"",null)))
-                                ;
+                                .onErrorResume(e-> Mono.just(new Document("",null,"",null)));
         }
 
 

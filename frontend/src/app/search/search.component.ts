@@ -12,38 +12,29 @@ import {Response} from "./response";
 import {NgForOf} from "@angular/common";
 
 @Component({
-  selector: 'app-search',
-  standalone: true,
-  imports: [MatFormFieldModule, MatInputModule, FormsModule, MatButtonModule, MatIconModule, MatDividerModule, NgForOf],
-  providers: [SearchService],
-  templateUrl: './search.component.html',
-  styleUrl: './search.component.css'
+      selector: 'app-search',
+      standalone: true,
+      imports: [MatFormFieldModule, MatInputModule, FormsModule, MatButtonModule, MatIconModule, MatDividerModule, NgForOf],
+      providers: [SearchService],
+      templateUrl: './search.component.html',
+      styleUrl: './search.component.css'
 })
 export class SearchComponent {
-  res: Response[] = [];
-  value = '';
+      res: Response[] = [];
+      value = '';
 
-  constructor(private searchService: SearchService) {
-  }
+      constructor(private searchService: SearchService) {
+      }
 
-  search(searchString: string) {
-    const q = new Questions();
-    const message = new Message();
-    message.role = 'user';
-    message.content = searchString;
-    q.messages.push(message);
-    this.searchService.search(q)
-      .subscribe(res => (this.res.push(this.convert(res))));
-  }
+      search(searchString: string) {
+            const q = new Questions();
+            const message = new Message();
+            message.role = 'user';
+            message.content = searchString;
+            q.messages.push(message);
+            this.searchService.search(searchString)
+                  .subscribe(res => (this.res.push(res)));
+      }
 
-  convert(rawJson: string): Response {
-    rawJson = rawJson.replace("\n", '');
-    rawJson = rawJson.replace(/(\r\n|\n|\r)/gm, "");
-    try {
-      return JSON.parse(rawJson);
-    } catch (e) {
-      console.error(e);
-    }
-    return new Response();
-  }
+
 }
