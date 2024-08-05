@@ -15,7 +15,12 @@ public class AIConfig {
                 return WebClient.builder()
                                 .clientConnector(new ReactorClientHttpConnector(
                                                 HttpClient.create().followRedirect(true)
-                                )).build();
+                                ))
+                        .codecs(codecs -> codecs
+                                .defaultCodecs()
+                                .maxInMemorySize(2048 * 1024))
+
+                .build();
         }
         @Bean
         public RestClient.Builder ollamaRestClientBuilder() {

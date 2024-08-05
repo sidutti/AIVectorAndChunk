@@ -24,3 +24,5 @@ spring:
     password: ElasticAdminPassword
     uris: http://192.168.1.84:30003/
     username: elastic
+  codec:
+    max-in-memory-size: 2GB

@@ -57,9 +57,10 @@ public class HuggingFaceService {
         private Document createDocument(Root.RootRow rootRow) {
                 String finalValue = rootRow.row().instruction().concat(rootRow.row().output());
                 Map<String, Object> metadata = new HashMap<>();
-                metadata.put("title", rootRow.row().output());
-                metadata.put("description", rootRow.row().instruction());
-                List<Double> embedding = model.embed(finalValue);
+                metadata.put("title", rootRow.row().instruction());
+                metadata.put("description", rootRow.row().output());
+                List<Double> embedding = model.embed(rootRow.row().instruction());
+                System.out.printf("FinalValue"+ finalValue);
                 return new Document(UUID.randomUUID().toString(), metadata, finalValue, embedding);
         }
 }
