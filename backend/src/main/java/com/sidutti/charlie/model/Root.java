@@ -9,28 +9,28 @@ public record Root(List<Feature> features,
                    int num_rows_per_page,
                    boolean partial) {
 
-        public record Feature(int feature_idx,
-                              String name,
-                              Type type) {
+    public record Feature(int feature_idx,
+                          String name,
+                          Type type) {
 
-        }
+    }
 
-        public record RootRow(int row_idx,
-                              Row row,
-                              List<Object> truncated_cells) {
+    public record RootRow(int row_idx,
+                          Row row,
+                          List<Object> truncated_cells) {
 
-        }
+    }
 
-        public record Row(String instruction,
-                          String output,
-                          String input) {
+    public record Row(String instruction,
+                      String output,
+                      String input) {
 
-        }
+    }
 
-        public record Type(String dtype,
-                           String _type) {
+    public record Type(String dtype,
+                       String _type) {
 
-        }
+    }
 }
 
 

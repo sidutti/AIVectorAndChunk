@@ -10,8 +10,8 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 @SpringBootApplication
 public class SiduttiApplication {
 
-        public static void main(String[] args) {
-                SpringApplication.run(SiduttiApplication.class, args);
-        }
+    public static void main(String[] args) {
+        SpringApplication.run(SiduttiApplication.class, args);
+    }
 
 }

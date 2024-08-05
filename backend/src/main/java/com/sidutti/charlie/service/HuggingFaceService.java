@@ -17,50 +17,52 @@ import java.util.UUID;
 
 @Component
 public class HuggingFaceService {
-        private final EmbeddingModel model;
-        private final WebClient webClient;
+    private final EmbeddingModel model;
+    private final WebClient webClient;
+    private final ElasticDocumentRepository documentRepository;
 
-        private final ElasticDocumentRepository documentRepository;
+    public HuggingFaceService(EmbeddingModel model, WebClient webClient, ElasticDocumentRepository documentRepository) {
+        this.model = model;
+        this.webClient = webClient;
+        this.documentRepository = documentRepository;
+    }
 
-        public HuggingFaceService(EmbeddingModel model, WebClient webClient, ElasticDocumentRepository documentRepository) {
-                this.model = model;
-                this.webClient = webClient;
-                this.documentRepository = documentRepository;
-        }
+    public Flux<Document> createEmbeddingsFromHuggingFace(int pageNumber, int numberOfRows, String dataset) {
+        return webClient
+                .get()
+                .uri(uriBuilder ->
 
-        public Flux<Document> createEmbeddingsFromHuggingFace(int pageNumber, int numberOfRows, String dataset) {
-                return webClient
-                                .get()
-                                .uri(uriBuilder ->
-
-                                                uriBuilder.host("datasets-server.huggingface.co")
-                                                                .scheme("https")
-                                                                .path("rows")
-                                                                .queryParam("dataset", dataset)
-                                                                .queryParam("config", "default")
-                                                                .queryParam("split", "train")
-                                                                .queryParam("offset", pageNumber)
-                                                                .queryParam("length", numberOfRows)
-                                                                .build())
-                                .accept(MediaType.APPLICATION_JSON)
-                                .retrieve()
-                                .bodyToMono(Root.class)
-                                .map(Root::rows)
-                                .flatMapIterable(list -> list)
-                                .doOnError(Throwable::printStackTrace)
-                                .map(this::createDocument)
-                                .flatMap(documentRepository::save)
-                                .onErrorResume(e-> Mono.just(new Document("",null,"",null)));
-        }
+                        uriBuilder.host("datasets-server.huggingface.co")
+                                .scheme("https")
+                                .path("rows")
+                                .queryParam("dataset", dataset)
+                                .queryParam("config", "default")
+                                .queryParam("split", "train")
+                                .queryParam("offset", pageNumber)
+                                .queryParam("length", numberOfRows)
+                                .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Root.class)
+                // .map(this::parseStringToJson)
+                .map(Root::rows)
+                .flatMapIterable(list -> list)
+                .map(Root.RootRow::row)
+                .map(this::createDocument)
+                .flatMap(documentRepository::save)
+                .onErrorResume(e -> {
+                    System.out.println("Error creating document: " + e.getMessage());
+                    return Mono.just(new Document("", null, "", null));
+                });
+    }
 
 
-        private Document createDocument(Root.RootRow rootRow) {
-                String finalValue = rootRow.row().instruction().concat(rootRow.row().output());
-                Map<String, Object> metadata = new HashMap<>();
-                metadata.put("title", rootRow.row().instruction());
-                metadata.put("description", rootRow.row().output());
-                List<Double> embedding = model.embed(rootRow.row().instruction());
-                System.out.printf("FinalValue"+ finalValue);
-                return new Document(UUID.randomUUID().toString(), metadata, finalValue, embedding);
-        }
+    private Document createDocument(Root.Row row) {
+        String finalValue = row.instruction().concat(row.output());
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("title", row.instruction());
+        metadata.put("description", row.output());
+        List<Double> embedding = model.embed(row.output());
+        return new Document(UUID.randomUUID().toString(), metadata, finalValue, embedding);
+    }
 }

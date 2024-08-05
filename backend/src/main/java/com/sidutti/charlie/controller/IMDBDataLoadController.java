@@ -16,25 +16,25 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 
 @Configuration
 public class IMDBDataLoadController {
-        private final FileReaderService fileReaderService;
-        private final BasicsRepository basicsRepository;
+    private final FileReaderService fileReaderService;
+    private final BasicsRepository basicsRepository;
 
-        public IMDBDataLoadController(FileReaderService fileReaderService, BasicsRepository basicsRepository) {
-                this.fileReaderService = fileReaderService;
-                this.basicsRepository = basicsRepository;
-        }
+    public IMDBDataLoadController(FileReaderService fileReaderService, BasicsRepository basicsRepository) {
+        this.fileReaderService = fileReaderService;
+        this.basicsRepository = basicsRepository;
+    }
 
-        @Bean
-        public RouterFunction<ServerResponse> getRoutes() {
-                return route(GET("/dataLoad/Basics"), this::readAndLoadBasics);
-        }
+    @Bean
+    public RouterFunction<ServerResponse> getRoutes() {
+        return route(GET("/dataLoad/Basics"), this::readAndLoadBasics);
+    }
 
-        private Mono<ServerResponse> readAndLoadBasics(ServerRequest serverRequest) {
-                String fileName = serverRequest.queryParam("fileName").orElseThrow();
-                return ok().body(fileReaderService.readFile(fileName)
-                                .map(fileReaderService::splitLine)
-                                .map(fileReaderService::getBasics)
-                                .flatMap(basicsRepository::save), Basics.class);
+    private Mono<ServerResponse> readAndLoadBasics(ServerRequest serverRequest) {
+        String fileName = serverRequest.queryParam("fileName").orElseThrow();
+        return ok().body(fileReaderService.readFile(fileName)
+                .map(fileReaderService::splitLine)
+                .map(fileReaderService::getBasics)
+                .flatMap(basicsRepository::save), Basics.class);
 
-        }
+    }
 }

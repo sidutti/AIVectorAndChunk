@@ -7,61 +7,61 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-                "source",
-                "width",
-                "height"
+        "source",
+        "width",
+        "height"
 })
 
 public class Originalimage {
 
-        @JsonProperty("source")
-        private String source;
-        @JsonProperty("width")
-        private int width;
-        @JsonProperty("height")
-        private int height;
-        @JsonIgnore
+    @JsonProperty("source")
+    private String source;
+    @JsonProperty("width")
+    private int width;
+    @JsonProperty("height")
+    private int height;
+    @JsonIgnore
 
-        private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
-        @JsonProperty("source")
-        public String getSource() {
-                return source;
-        }
+    @JsonProperty("source")
+    public String getSource() {
+        return source;
+    }
 
-        @JsonProperty("source")
-        public void setSource(String source) {
-                this.source = source;
-        }
+    @JsonProperty("source")
+    public void setSource(String source) {
+        this.source = source;
+    }
 
-        @JsonProperty("width")
-        public int getWidth() {
-                return width;
-        }
+    @JsonProperty("width")
+    public int getWidth() {
+        return width;
+    }
 
-        @JsonProperty("width")
-        public void setWidth(int width) {
-                this.width = width;
-        }
+    @JsonProperty("width")
+    public void setWidth(int width) {
+        this.width = width;
+    }
 
-        @JsonProperty("height")
-        public int getHeight() {
-                return height;
-        }
+    @JsonProperty("height")
+    public int getHeight() {
+        return height;
+    }
 
-        @JsonProperty("height")
-        public void setHeight(int height) {
-                this.height = height;
-        }
+    @JsonProperty("height")
+    public void setHeight(int height) {
+        this.height = height;
+    }
 
-        @JsonAnyGetter
-        public Map<String, Object> getAdditionalProperties() {
-                return this.additionalProperties;
-        }
+    @JsonAnyGetter
+    public Map<String, Object> getAdditionalProperties() {
+        return this.additionalProperties;
+    }
 
-        @JsonAnySetter
-        public void setAdditionalProperty(String name, Object value) {
-                this.additionalProperties.put(name, value);
-        }
+    @JsonAnySetter
+    public void setAdditionalProperty(String name, Object value) {
+        this.additionalProperties.put(name, value);
+    }
 
 }
