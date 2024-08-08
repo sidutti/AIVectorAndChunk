@@ -3,6 +3,7 @@ package com.sidutti.charlie.controller;
 import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.SearchResults;
 import com.sidutti.charlie.service.HuggingFaceService;
+import com.sidutti.charlie.service.PdfService;
 import com.sidutti.charlie.service.SearchService;
 import com.sidutti.charlie.service.WikiRandomEmbeddingGenerator;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -24,14 +27,15 @@ public class EmbeddingController {
     private final WikiRandomEmbeddingGenerator generator;
     private final SearchService searchService;
     private final HuggingFaceService huggingFaceService;
-
+    private final PdfService pdfService;
 
     @Autowired
-    public EmbeddingController(EmbeddingModel embeddingModel, WikiRandomEmbeddingGenerator generator, SearchService searchService, HuggingFaceService huggingFaceService) {
+    public EmbeddingController(EmbeddingModel embeddingModel, WikiRandomEmbeddingGenerator generator, SearchService searchService, HuggingFaceService huggingFaceService, PdfService pdfService) {
         this.embeddingModel = embeddingModel;
         this.generator = generator;
         this.searchService = searchService;
         this.huggingFaceService = huggingFaceService;
+        this.pdfService = pdfService;
     }
 
     @GetMapping("/ai/embedding")
@@ -66,11 +70,21 @@ public class EmbeddingController {
         SearchRequest searchRequest = SearchRequest.defaults()
                 .withQuery(query)
                 .withTopK(10)
-                .withSimilarityThreshold(SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL);
+                .withSimilarityThreshold(.5);
         long start = System.currentTimeMillis();
         return searchService.similaritySearch(searchRequest)
                 .doFinally(a -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
     }
 
+    @PostMapping("/ai/pdf/embedding/start")
+    public Flux<Document> searchMathEmbedding(@RequestBody String path) throws IOException {
+        path = path.replace("\"", ""); // replace backslashes with forward slashes for correct
+        return Flux.concat(pdfService.parsePdf(path)
+                .map(pdfService::splitDocument)
+                .flatMap(Collection::parallelStream)
+                .map(pdfService::createDocument)
+                .map(pdfService::saveDocument)
+                .toList());
+    }
 
 }
