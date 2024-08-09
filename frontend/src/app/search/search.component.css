@@ -9,3 +9,7 @@ example-form-field {
 response {
   width: 100%;
 }
+mat-card {
+      padding: 10px;
+      margin: 20px;
+}

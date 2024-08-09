@@ -9,7 +9,7 @@ export class SearchService {
       constructor(private http: HttpClient) {
       }
 
-      search(id: String): Observable<Response> {
-            return this.http.post<Response>(`http://localhost:8080/ai/embedding/search`, id, {responseType: 'json'});
+      search(id: String): Observable<Response[]> {
+            return this.http.post<Response[]>(`http://localhost:8080/ai/embedding/search`, id, {responseType: 'json'});
       }
 }

@@ -1,9 +1,6 @@
-import {Message} from "./message";
-
-
-export class Response {
-      content!: string;
-      formatedContent: string = '';
-      id!: Message;
-      distance!: number;
+export interface Response {
+      content: string;
+      formatedContent: string;
+      id: string;
+      distance: number;
 }
