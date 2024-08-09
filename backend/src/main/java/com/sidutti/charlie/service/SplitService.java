@@ -16,7 +16,7 @@ public class SplitService {
     private final DocumentSplitter splitter;
 
     public SplitService() {
-        this.splitter = new DocumentByParagraphSplitter(512, 256);
+        this.splitter = new DocumentByParagraphSplitter(5000, 1000);
     }
 
     public List<TextSegment> splitDocument(Root.Row row) {

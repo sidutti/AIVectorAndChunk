@@ -21,7 +21,7 @@ public class ContentUrls {
     private Mobile mobile;
     @JsonIgnore
 
-    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
+    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("desktop")
     public Desktop getDesktop() {

@@ -75,7 +75,7 @@ public class RandomWikiPage {
     private String extractHtml;
     @JsonIgnore
 
-    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
+    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("type")
     public String getType() {

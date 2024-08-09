@@ -22,7 +22,7 @@ public class Titles {
     private String display;
     @JsonIgnore
 
-    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
+    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("canonical")
     public String getCanonical() {

@@ -40,7 +40,6 @@ public class PdfService {
 
     private Document parseDocument(Path path)   {
         ApacheTikaDocumentParser parser = new ApacheTikaDocumentParser();
-
         try {
             return parser.parse(Files.newInputStream(path.toAbsolutePath()));
         } catch (IOException e) {

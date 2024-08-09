@@ -22,7 +22,7 @@ public class Originalimage {
     private int height;
     @JsonIgnore
 
-    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
+    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("source")
     public String getSource() {

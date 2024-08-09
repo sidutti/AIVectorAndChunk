@@ -25,7 +25,7 @@ public class Mobile {
     private String talk;
     @JsonIgnore
 
-    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
+    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("page")
     public String getPage() {

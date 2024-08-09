@@ -19,7 +19,7 @@ public class Namespace {
     private String text;
     @JsonIgnore
 
-    private Map<String, Object> additionalProperties = new LinkedHashMap<>();
+    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("id")
     public int getId() {
