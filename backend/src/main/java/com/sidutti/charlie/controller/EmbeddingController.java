@@ -15,9 +15,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 //enable cors for enabling cors
 @CrossOrigin(origins = "*")
@@ -77,14 +81,18 @@ public class EmbeddingController {
     }
 
     @PostMapping("/ai/pdf/embedding/start")
-    public Flux<Document> searchMathEmbedding(@RequestBody String path) throws IOException {
+    public void searchMathEmbedding(@RequestBody String path) throws IOException {
         path = path.replace("\"", ""); // replace backslashes with forward slashes for correct
-        return Flux.concat(pdfService.parsePdf(path)
-                .map(pdfService::splitDocument)
-                .flatMap(Collection::parallelStream)
-                .map(pdfService::createDocument)
-                .map(pdfService::saveDocument)
-                .toList());
-    }
 
+        try (Stream<Path> paths = Files.walk(Paths.get(path))) {
+             paths.filter(Files::isRegularFile)
+                    .filter(filePath -> filePath.toString().endsWith(".pdf"))
+                    .map(pdfService::parseDocument)
+                    .map(pdfService::splitDocument)
+                    .flatMap(Collection::parallelStream)
+                    .map(pdfService::createDocument)
+                    .map(pdfService::saveDocument)
+                    .forEach(Mono::subscribe);
+        }
+    }
 }
