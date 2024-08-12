@@ -73,8 +73,8 @@ public class EmbeddingController {
     public Flux<SearchResults> searchEmbedding(@RequestBody String query) {
         SearchRequest searchRequest = SearchRequest.defaults()
                 .withQuery(query)
-                .withTopK(10)
-                .withSimilarityThreshold(.5);
+                .withTopK(200)
+               ;
         long start = System.currentTimeMillis();
         return searchService.similaritySearch(searchRequest)
                 .doFinally(a -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));

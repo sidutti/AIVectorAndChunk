@@ -1,0 +1,15 @@
+<mat-card appearance="outlined">
+      <mat-form-field>
+            <mat-label>Enter Text to search</mat-label>
+            <input matInput type="text" [(ngModel)]="value"/>
+            @if (value) {
+                  <button matSuffix mat-flat-button (click)="search(value)">Search</button>
+            }
+      </mat-form-field>
+</mat-card>
+
+<mat-card appearance="outlined">
+      <div *ngIf="data">
+            <p>{{ data }}</p>
+      </div>
+</mat-card>

@@ -1,33 +1,45 @@
 import {Component} from "@angular/core";
-import {MatFormFieldModule} from "@angular/material/form-field";
-import {MatInputModule} from "@angular/material/input";
-import {FormsModule} from "@angular/forms";
-import {MatButtonModule} from "@angular/material/button";
-import {MatIconModule} from "@angular/material/icon";
-import {MatDividerModule} from "@angular/material/divider";
 import {SearchService} from "./search.service";
-import {Response} from "./response";
-import {NgForOf} from "@angular/common";
-import {MatExpansionPanelTitle} from "@angular/material/expansion";
 import {MatCard, MatCardContent} from "@angular/material/card";
+import {MatFormField} from "@angular/material/form-field";
+import {FormsModule} from "@angular/forms";
+import {MatInput} from "@angular/material/input";
+import {MatButton} from "@angular/material/button";
+import {MatLabel} from "@angular/material/form-field";
 import {
       MatCell,
       MatCellDef,
       MatColumnDef,
       MatHeaderCell,
       MatHeaderCellDef,
-      MatHeaderRow,
-      MatHeaderRowDef,
-      MatRow,
-      MatRowDef,
+      MatHeaderRow, MatHeaderRowDef, MatRow, MatRowDef,
       MatTable
 } from "@angular/material/table";
-import {TooltipComponent} from "@angular/material/tooltip";
+import {Response} from "./response";
+
 
 @Component({
       selector: 'app-search',
       standalone: true,
-      imports: [MatFormFieldModule, MatInputModule, FormsModule, MatButtonModule, MatIconModule, MatDividerModule, NgForOf, MatExpansionPanelTitle, MatCard, MatCardContent, MatTable, MatColumnDef, MatHeaderCell, MatCell, MatRow, MatHeaderRow, MatCellDef, MatHeaderCellDef, MatHeaderRowDef, MatRowDef, TooltipComponent],
+      imports: [
+            MatLabel,
+            MatCard,
+            MatCardContent,
+            MatFormField,
+            FormsModule,
+            MatInput,
+            MatButton,
+            MatTable,
+            MatColumnDef,
+            MatHeaderCell,
+            MatCell,
+            MatHeaderCellDef,
+            MatCellDef,
+            MatHeaderRow,
+            MatRow,
+            MatRowDef,
+            MatHeaderRowDef
+      ],
       providers: [SearchService],
       templateUrl: './search.component.html',
       styleUrl: './search.component.css'
