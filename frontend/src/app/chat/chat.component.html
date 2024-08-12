@@ -10,6 +10,6 @@
 
 <mat-card appearance="outlined">
       <div *ngIf="data">
-            <p>{{ data }}</p>
+            <div *ngFor="let str of data">{{ str.data }}</div>
       </div>
 </mat-card>

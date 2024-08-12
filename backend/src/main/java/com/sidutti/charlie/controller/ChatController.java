@@ -1,5 +1,6 @@
 package com.sidutti.charlie.controller;
 
+import com.sidutti.charlie.model.ChatData;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,8 +17,9 @@ public class ChatController {
         this.chatModel = chatModel;
     }
 
-    @PostMapping("/ai/chat")
-    public Flux<String> chat(@RequestBody String question) {
-        return chatModel.stream(question);
+    @PostMapping(value = "/ai/chat", produces = "application/json")
+    public Flux<ChatData> chat(@RequestBody String question) {
+        return chatModel.stream(question)
+                .map(ChatData::new);
     }
 }

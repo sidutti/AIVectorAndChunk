@@ -5,7 +5,8 @@ import {MatCard, MatCardContent} from "@angular/material/card";
 import {MatFormField, MatLabel, MatSuffix} from "@angular/material/form-field";
 import {MatInput} from "@angular/material/input";
 import {ChatService} from "./chat.service";
-import {NgIf} from "@angular/common";
+import {NgForOf, NgIf} from "@angular/common";
+import {ChatData} from "./chatData";
 
 @Component({
       selector: 'app-chat',
@@ -19,7 +20,8 @@ import {NgIf} from "@angular/common";
             MatInput,
             MatLabel,
             MatSuffix,
-            NgIf
+            NgIf,
+            NgForOf
       ],
       providers: [ChatService],
       templateUrl: './chat.component.html',
@@ -27,13 +29,14 @@ import {NgIf} from "@angular/common";
 })
 export class ChatComponent {
       value = '';
-      data: string = '';
+      data: ChatData[] = [];
 
       constructor(private chatService: ChatService) {
       }
 
       search(searchString: string) {
             this.chatService.search(searchString)
-                  .subscribe(res => this.data = res);
+                  .subscribe(result => this.data = result);
+
       }
 }
