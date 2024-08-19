@@ -6,3 +6,7 @@ mat-card {
 .mat-mdc-form-field {
       width: 100%;
 }
+.custom-content{
+      height: 100%;
+      display: flex;
+}

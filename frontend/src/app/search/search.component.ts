@@ -1,7 +1,7 @@
 import {Component} from "@angular/core";
 import {SearchService} from "./search.service";
 import {MatCard, MatCardContent} from "@angular/material/card";
-import {MatFormField} from "@angular/material/form-field";
+import {MatFormField, MatSuffix} from "@angular/material/form-field";
 import {FormsModule} from "@angular/forms";
 import {MatInput} from "@angular/material/input";
 import {MatButton} from "@angular/material/button";
@@ -16,6 +16,8 @@ import {
       MatTable
 } from "@angular/material/table";
 import {Response} from "./response";
+import {MatProgressSpinner} from "@angular/material/progress-spinner";
+import {NgIf} from "@angular/common";
 
 
 @Component({
@@ -38,7 +40,10 @@ import {Response} from "./response";
             MatHeaderRow,
             MatRow,
             MatRowDef,
-            MatHeaderRowDef
+            MatHeaderRowDef,
+            MatProgressSpinner,
+            NgIf,
+            MatSuffix
       ],
       providers: [SearchService],
       templateUrl: './search.component.html',
@@ -46,7 +51,7 @@ import {Response} from "./response";
 })
 export class SearchComponent {
       data: Response[] = [];
-      value = '';
+      value:string = '';
       displayedColumns: string[] = ['Search-Accuracy', 'Response'];
       constructor(private searchService: SearchService) {
       }

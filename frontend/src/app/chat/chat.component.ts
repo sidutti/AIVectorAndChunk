@@ -30,13 +30,19 @@ import {ChatData} from "./chatData";
 export class ChatComponent {
       value = '';
       data: ChatData[] = [];
+      stringValue: string='';
 
       constructor(private chatService: ChatService) {
       }
 
       search(searchString: string) {
             this.chatService.search(searchString)
-                  .subscribe(result => this.data = result);
+                  .subscribe(result => {
+                        let item;
+                        for (item of result) {
+                              this.stringValue+=item.data;
+                        }
+                  });
 
       }
 }
