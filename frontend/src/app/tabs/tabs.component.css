@@ -1,3 +1,6 @@
 .mat-tab-group {
       margin-bottom: 48px;
 }
+.mat-mdc-tab-body-wrapper{
+      height: calc(100% - 80px);
+}
