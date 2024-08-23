@@ -56,7 +56,7 @@ export class SearchComponent {
       stringValue: string = '';
       value: string = '';
       displayedColumns: string[] = ['Search-Accuracy', 'Response'];
-      clickedRows = new Set<Response>();
+
       columnsToDisplayWithExpand = [...this.displayedColumns, 'expand'];
       expandedElement: Response | null | undefined;
       element: Response | null | undefined;
@@ -65,6 +65,7 @@ export class SearchComponent {
       }
 
       generate(context: Response | null | undefined): void {
+            this.stringValue = '';
             if (context?.content) {
                   this.searchService.rag(this.value +'###'+context.content)
                         .subscribe(result => {
@@ -72,6 +73,7 @@ export class SearchComponent {
                               for (item of result) {
                                     this.stringValue += item.data;
                               }
+                              context.id=this.stringValue;
                         });
             }
       }
