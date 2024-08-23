@@ -4,8 +4,9 @@ import com.sidutti.charlie.model.Root;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.Metadata;
-import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenizer;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class SplitService {
     private final DocumentSplitter splitter;
 
     public SplitService() {
-        this.splitter = new DocumentByParagraphSplitter(5000, 1000);
+        this.splitter = DocumentSplitters.recursive(512, 256, new HuggingFaceTokenizer());
     }
 
     public List<TextSegment> splitDocument(Root.Row row) {

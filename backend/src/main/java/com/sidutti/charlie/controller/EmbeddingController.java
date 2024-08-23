@@ -72,15 +72,16 @@ public class EmbeddingController {
     @PostMapping("ai/embedding/search")
     public Flux<SearchResults> searchEmbedding(@RequestBody String query) {
         SearchRequest searchRequest = SearchRequest.defaults()
+                .withSimilarityThreshold(SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL)
                 .withQuery(query)
-                .withTopK(200);
+                .withTopK(15);
         long start = System.currentTimeMillis();
         return searchService.similaritySearch(searchRequest)
                 .doFinally(a -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
     }
 
     @PostMapping("/ai/pdf/embedding/start")
-    public void searchMathEmbedding(@RequestBody String path) throws IOException {
+    public void chunkAndStorePDF(@RequestBody String path) throws IOException {
         path = path.replace("\"", ""); // replace backslashes with forward slashes for correct
 
         try (Stream<Path> paths = Files.walk(Paths.get(path))) {
