@@ -12,7 +12,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -63,7 +62,7 @@ public class HuggingFaceService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title",segment.metadata().getString("title"));
         metadata.put("description", segment.metadata().getString("description"));
-        List<Double> embedding = model.embed(segment.text());
+        float[] embedding = model.embed(segment.text());
         return new Document(UUID.randomUUID().toString(), metadata, segment.text(), embedding);
     }
 }

@@ -14,10 +14,7 @@ import com.sidutti.charlie.model.SearchResults;
 import org.elasticsearch.client.RestClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.vectorstore.ElasticsearchAiSearchFilterExpressionConverter;
-import org.springframework.ai.vectorstore.ElasticsearchVectorStore;
-import org.springframework.ai.vectorstore.ElasticsearchVectorStoreOptions;
-import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.*;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
 import org.springframework.stereotype.Component;
@@ -25,7 +22,6 @@ import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Objects;
 
 @Component
@@ -51,7 +47,7 @@ public class SearchService {
                 searchRequest.getFilterExpression());
     }
 
-    public Flux<SearchResults> similaritySearch(List<Double> embedding, int topK, double similarityThreshold,
+    public Flux<SearchResults> similaritySearch(float[] embedding, int topK, double similarityThreshold,
                                                 Filter.Expression filterExpression) {
         return similaritySearch(
                 new co.elastic.clients.elasticsearch.core.SearchRequest.Builder().index(options.getIndexName())
@@ -61,12 +57,12 @@ public class SearchService {
                         .build());
     }
 
-    private Query getElasticsearchSimilarityQuery(List<Double> embedding, Filter.Expression filterExpression) {
+    private Query getElasticsearchSimilarityQuery(float[] embedding, Filter.Expression filterExpression) {
         return Query.of(queryBuilder -> queryBuilder.scriptScore(scriptScoreQueryBuilder -> scriptScoreQueryBuilder
                 .query(queryBuilder2 -> queryBuilder2.queryString(queryStringQuerybuilder -> queryStringQuerybuilder
                         .query(getElasticsearchQueryString(filterExpression))))
                 .script(scriptBuilder -> scriptBuilder
-                        .inline(inlineScriptBuilder -> inlineScriptBuilder.source(ElasticsearchVectorStore.COSINE_SIMILARITY_FUNCTION)
+                        .inline(inlineScriptBuilder -> inlineScriptBuilder.source(SimilarityFunction.cosine.name())
                                 .params("query_vector", JsonData.of(embedding))))));
     }
 

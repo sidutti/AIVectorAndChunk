@@ -11,6 +11,7 @@ spring:
       elasticsearch:
         dimensions: 768
     ollama:
+      baseUrl: "http://azure.ai"
       chat:
         model: llama3:8b
       embedding:
@@ -26,3 +27,11 @@ spring:
     username: elastic
   codec:
     max-in-memory-size: 2GB
+  threads:
+    virtual:
+      enabled: true
+
+angus:
+  activation:
+    native-image:
+      enable: false

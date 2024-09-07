@@ -86,7 +86,7 @@ public class EmbeddingController {
 
         try (Stream<Path> paths = Files.walk(Paths.get(path))) {
              paths.filter(Files::isRegularFile)
-                    .filter(filePath -> filePath.toString().endsWith(".pdf"))
+                    .filter(filePath -> filePath.toString().endsWith(".docx"))
                     .map(pdfService::parseDocument)
                     .map(pdfService::splitDocument)
                     .flatMap(Collection::parallelStream)

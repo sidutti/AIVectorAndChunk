@@ -12,7 +12,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,7 +55,7 @@ public class WikiRandomEmbeddingGenerator {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", randomWikiPage.getTitle());
         metadata.put("description", randomWikiPage.getDescription());
-        List<Double> embedding = model.embed(randomWikiPage.getExtract());
+        float[] embedding = model.embed(randomWikiPage.getExtract());
         Document doc = new Document(UUID.randomUUID().toString(), metadata, randomWikiPage.getExtract(), embedding);
         return documentRepository.save(doc);
     }

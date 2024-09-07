@@ -31,6 +31,7 @@ public class PdfService {
     public Document parseDocument(Path path) {
         ApacheTikaDocumentParser parser = new ApacheTikaDocumentParser();
         try {
+            System.out.println(path.toString());
             return parser.parse(Files.newInputStream(path.toAbsolutePath()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -45,7 +46,7 @@ public class PdfService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", segment.metadata().getString("title"));
         metadata.put("description", segment.metadata().getString("description"));
-        List<Double> embedding = model.embed(segment.text());
+        float[] embedding = model.embed(segment.text());
         return new com.sidutti.charlie.model.Document(UUID.randomUUID().toString(), metadata, segment.text(), embedding);
     }
 
