@@ -2,8 +2,11 @@ package com.sidutti.charlie.service;
 
 import com.sidutti.charlie.repository.elastic.ElasticDocumentRepository;
 import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
 import dev.langchain4j.data.segment.TextSegment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -11,35 +14,44 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class PdfService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PdfService.class);
     private final ElasticDocumentRepository documentRepository;
     private final EmbeddingModel model;
     private final SplitService splitService;
 
-    public PdfService(ElasticDocumentRepository documentRepository, EmbeddingModel model, SplitService splitService) {
+
+    public PdfService(ElasticDocumentRepository documentRepository, EmbeddingModel model, SplitService splitService ) {
         this.documentRepository = documentRepository;
         this.model = model;
         this.splitService = splitService;
+
     }
 
     public Document parseDocument(Path path) {
         ApacheTikaDocumentParser parser = new ApacheTikaDocumentParser();
         try {
-            System.out.println(path.toString());
+            LOGGER.debug("Path to File {}", path);
             return parser.parse(Files.newInputStream(path.toAbsolutePath()));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("Failed to parse",e);
         }
+        return new Document("Empty");
     }
 
     public List<TextSegment> splitDocument(Document document) {
-        return splitService.splitDocument(document);
+        List<String> chunks = splitService.chunkText(document.text());
+        List<TextSegment> result = new ArrayList<>();
+        for (int i = 0; i < chunks.size(); i++) {
+            if(!chunks.get(i).isBlank()) {
+                result.add(new TextSegment(chunks.get(i), new Metadata(Map.of("index", i))));
+            }
+        }
+        return result;
+
     }
 
     public com.sidutti.charlie.model.Document createDocument(TextSegment segment) {

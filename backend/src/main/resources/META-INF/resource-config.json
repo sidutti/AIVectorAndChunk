@@ -1,0 +1,11 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "library-module:^opennlp^"
+      }
+    ],
+    "excludes": []
+  },
+  "bundles": []
+}

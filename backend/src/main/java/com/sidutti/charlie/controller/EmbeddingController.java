@@ -85,8 +85,8 @@ public class EmbeddingController {
         path = path.replace("\"", ""); // replace backslashes with forward slashes for correct
 
         try (Stream<Path> paths = Files.walk(Paths.get(path))) {
-             paths.filter(Files::isRegularFile)
-                    .filter(filePath -> filePath.toString().endsWith(".docx"))
+            paths.filter(Files::isRegularFile)
+                    .parallel()
                     .map(pdfService::parseDocument)
                     .map(pdfService::splitDocument)
                     .flatMap(Collection::parallelStream)

@@ -11,9 +11,8 @@ spring:
       elasticsearch:
         dimensions: 768
     ollama:
-      baseUrl: "http://azure.ai"
       chat:
-        model: llama3:8b
+        model: mistral-nemo
       embedding:
         model: nomic-embed-text
   data:
@@ -30,8 +29,5 @@ spring:
   threads:
     virtual:
       enabled: true
-
-angus:
-  activation:
-    native-image:
-      enable: false
+  jackson:
+    property-naming-strategy: SNAKE_CASE
