@@ -1,13 +1,13 @@
 package com.sidutti.charlie.service;
 
 
-
 import org.apache.lucene.index.VectorSimilarityFunction;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.regex.Pattern;
+
 @Component
 public class SemanticChunkingService {
 
@@ -17,6 +17,7 @@ public class SemanticChunkingService {
     public SemanticChunkingService(EmbeddingModel embeddingModel) {
         this.embeddingModel = embeddingModel;
     }
+
     // Main function to chunk text into meaningful parts
     public List<String> chunkText(String text) {
         // Split text into individual sentences
@@ -70,7 +71,7 @@ public class SemanticChunkingService {
     // Function to combine adjacent sentences with a buffer
     private List<Map<String, String>> combineSentences(String[] sentences) {
         List<Map<String, String>> combinedSentences = new ArrayList<>();
-        for (int i = 0; i < sentences.length ; i++) {
+        for (int i = 0; i < sentences.length; i++) {
             StringBuilder combinedSentence = new StringBuilder();
             for (int j = i - 1; j < i; j++) {
                 if (j >= 0) {
@@ -106,7 +107,6 @@ public class SemanticChunkingService {
         }
         return distances;
     }
-
 
 
     // Helper function to calculate percentile

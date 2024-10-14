@@ -9,12 +9,12 @@ spring:
         index-name: vector_index
         path-name: embedding
       elasticsearch:
-        dimensions: 768
+        dimensions: 1024
     ollama:
       chat:
-        model: mistral-nemo
+        model: llama3.1
       embedding:
-        model: nomic-embed-text
+        model: mxbai-embed-large
   data:
     mongodb:
       uri: mongodb+srv://sidutti:1JtigZAmA4WeNOuM@sidchar.anzbaom.mongodb.net/?retryWrites=true&w=majority&appName=sidchar
@@ -29,5 +29,9 @@ spring:
   threads:
     virtual:
       enabled: true
-  jackson:
-    property-naming-strategy: SNAKE_CASE
+  aot:
+    enabled: true
+
+
+
+

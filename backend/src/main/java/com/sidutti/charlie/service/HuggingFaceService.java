@@ -21,7 +21,11 @@ public class HuggingFaceService {
     private final WebClient webClient;
     private final ElasticDocumentRepository documentRepository;
     private final SplitService splitService;
-    public HuggingFaceService(EmbeddingModel model, WebClient webClient, ElasticDocumentRepository documentRepository, SplitService splitService) {
+
+    public HuggingFaceService(EmbeddingModel model,
+                              WebClient webClient,
+                              ElasticDocumentRepository documentRepository,
+                              SplitService splitService) {
         this.model = model;
         this.webClient = webClient;
         this.documentRepository = documentRepository;
@@ -60,7 +64,7 @@ public class HuggingFaceService {
 
     private Document createDocument(TextSegment segment) {
         Map<String, Object> metadata = new HashMap<>();
-        metadata.put("title",segment.metadata().getString("title"));
+        metadata.put("title", segment.metadata().getString("title"));
         metadata.put("description", segment.metadata().getString("description"));
         float[] embedding = model.embed(segment.text());
         return new Document(UUID.randomUUID().toString(), metadata, segment.text(), embedding);

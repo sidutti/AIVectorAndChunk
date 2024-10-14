@@ -1,6 +1,11 @@
 package com.sidutti.charlie.config;
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -30,6 +35,14 @@ public class AIConfig {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        return new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .registerModule(new JavaTimeModule());
     }
+
+    @Bean
+    public ElasticsearchAsyncClient elasticsearchAsyncClient(org.elasticsearch.client.RestClient restClient, ObjectMapper objectMapper) {
+        return new ElasticsearchAsyncClient(new RestClientTransport(restClient, new JacksonJsonpMapper(objectMapper)));
+    }
+
 }

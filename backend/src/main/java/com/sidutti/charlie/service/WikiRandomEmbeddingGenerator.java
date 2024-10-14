@@ -23,7 +23,10 @@ public class WikiRandomEmbeddingGenerator {
     private final ObjectMapper objectMapper;
     private final ElasticDocumentRepository documentRepository;
 
-    public WikiRandomEmbeddingGenerator(EmbeddingModel model, WebClient webClient, ObjectMapper objectMapper, ElasticDocumentRepository documentRepository) {
+    public WikiRandomEmbeddingGenerator(EmbeddingModel model,
+                                        WebClient webClient,
+                                        ObjectMapper objectMapper,
+                                        ElasticDocumentRepository documentRepository) {
         this.model = model;
         this.webClient = webClient;
         this.objectMapper = objectMapper;

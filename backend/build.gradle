@@ -38,22 +38,27 @@ configurations {
 
 dependencies {
 
-    implementation 'org.apache.lucene:lucene-core:9.11.1'
+    implementation 'org.apache.lucene:lucene-core:9.12.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
+    /*implementation 'org.springframework.ai:spring-ai-transformers-spring-boot-starter'
+    implementation 'com.microsoft.onnxruntime:onnxruntime_gpu:1.19.2'
+*/
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation('org.springframework.ai:spring-ai-elasticsearch-store-spring-boot-starter')
     implementation('org.springframework.boot:spring-boot-starter-data-elasticsearch')
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation('org.springframework.ai:spring-ai-tika-document-reader')
     implementation "dev.langchain4j:langchain4j:${lang4jVersion}"
+    implementation "dev.langchain4j:langchain4j-embeddings:${lang4jVersion}"
     implementation "dev.langchain4j:langchain4j-document-parser-apache-tika:${tikaParser}"
     implementation "org.apache.james:apache-mime4j-core:${mime4j}"
     implementation "org.apache.commons:commons-compress:${commonsCompress}"
     implementation "org.apache.commons:commons-text:${commonsVersion}"
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

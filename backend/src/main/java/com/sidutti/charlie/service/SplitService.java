@@ -4,8 +4,9 @@ import com.sidutti.charlie.model.Root;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.Metadata;
-import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,7 @@ public class SplitService {
 
     public SplitService(SemanticChunkingService semanticChunkingService) {
         this.semanticChunkingService = semanticChunkingService;
-        this.splitter = new DocumentByParagraphSplitter(2048, 1024);
+        this.splitter = DocumentSplitters.recursive(600, 30, new HuggingFaceTokenizer());
     }
 
     public List<TextSegment> splitDocument(Root.Row row) {

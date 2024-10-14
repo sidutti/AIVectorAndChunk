@@ -57,8 +57,8 @@ public class EmbeddingController {
     public Flux<Document> startMathEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
                                              @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         long start = System.currentTimeMillis();
-        return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize, "ibivibiv/math_instruct")
-                .doFinally(a -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
+        return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize, "nvidia/OpenMathInstruct-1")
+                .doFinally(_ -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
     }
 
     @GetMapping("/ai/finance/embedding/start")
@@ -66,7 +66,7 @@ public class EmbeddingController {
                                                 @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         long start = System.currentTimeMillis();
         return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize, "DeividasM/financial-instruction-aq22")
-                .doFinally(a -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
+                .doFinally(_ -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
     }
 
     @PostMapping("ai/embedding/search")
@@ -77,7 +77,7 @@ public class EmbeddingController {
                 .withTopK(15);
         long start = System.currentTimeMillis();
         return searchService.similaritySearch(searchRequest)
-                .doFinally(a -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
+                .doFinally(_ -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
     }
 
     @PostMapping("/ai/pdf/embedding/start")

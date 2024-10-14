@@ -29,6 +29,7 @@ public class ChatController {
         return chatModel.stream(question)
                 .map(ChatData::new);
     }
+
     @PostMapping(value = "/ai/rag/generate", produces = MediaType.APPLICATION_JSON_VALUE)
     public Flux<ChatData> rag(@RequestBody String question) {
         String[] inputs = question.split("###");

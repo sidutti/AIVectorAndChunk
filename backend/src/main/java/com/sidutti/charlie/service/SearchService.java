@@ -1,69 +1,119 @@
 package com.sidutti.charlie.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.KnnSearch;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
-import co.elastic.clients.elasticsearch.core.search.ResponseBody;
-import co.elastic.clients.json.JsonData;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import co.elastic.clients.util.ObjectBuilder;
 import com.sidutti.charlie.model.SearchResults;
-import org.elasticsearch.client.RestClient;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.vectorstore.*;
+import org.springframework.ai.model.EmbeddingUtils;
+import org.springframework.ai.observation.conventions.VectorStoreProvider;
+import org.springframework.ai.observation.conventions.VectorStoreSimilarityMetric;
+import org.springframework.ai.vectorstore.ElasticsearchAiSearchFilterExpressionConverter;
+import org.springframework.ai.vectorstore.ElasticsearchVectorStoreOptions;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.SimilarityFunction;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
+import org.springframework.ai.vectorstore.observation.DefaultVectorStoreObservationConvention;
+import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
+import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
+import org.springframework.ai.vectorstore.observation.VectorStoreObservationDocumentation;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+
+import static java.lang.Math.sqrt;
 
 @Component
 public class SearchService {
-
+    private static final VectorStoreObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DefaultVectorStoreObservationConvention();
     private final EmbeddingModel embeddingModel;
     private final ElasticsearchVectorStoreOptions options = new ElasticsearchVectorStoreOptions();
     private final FilterExpressionConverter filterExpressionConverter;
     private final ElasticsearchAsyncClient elasticsearchAsyncClient;
+    private final ObservationRegistry observationRegistry;
+    @Nullable
+    private final VectorStoreObservationConvention customObservationConvention;
 
-    public SearchService(EmbeddingModel embeddingModel, RestClient restClient) {
+    public SearchService(EmbeddingModel embeddingModel, ElasticsearchAsyncClient elasticsearchAsyncClient,
+                         ObservationRegistry observationRegistry,
+                         @Nullable VectorStoreObservationConvention customObservationConvention
+    ) {
         this.embeddingModel = embeddingModel;
+        this.elasticsearchAsyncClient = elasticsearchAsyncClient;
+        this.observationRegistry = observationRegistry;
+        this.customObservationConvention = customObservationConvention;
         filterExpressionConverter = new ElasticsearchAiSearchFilterExpressionConverter();
-        this.elasticsearchAsyncClient = new ElasticsearchAsyncClient(new RestClientTransport(restClient, new JacksonJsonpMapper(
-                new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false))));
+
     }
 
+    public Flux<SearchResults> similaritySearch(SearchRequest request) {
 
-    public Flux<SearchResults> similaritySearch(SearchRequest searchRequest) {
+        VectorStoreObservationContext searchObservationContext = this
+                .createObservationContextBuilder(VectorStoreObservationContext.Operation.QUERY.value())
+                .withQueryRequest(request)
+                .build();
+
+        return VectorStoreObservationDocumentation.AI_VECTOR_STORE
+                .observation(this.customObservationConvention, DEFAULT_OBSERVATION_CONVENTION,
+                        () -> searchObservationContext, this.observationRegistry)
+                .observe(() -> this.doSimilaritySearch(request));
+    }
+
+    public Flux<SearchResults> doSimilaritySearch(SearchRequest searchRequest) {
         Assert.notNull(searchRequest, "The search request must not be null.");
-        return similaritySearch(this.embeddingModel.embed(searchRequest.getQuery()), searchRequest.getTopK(),
-                Double.valueOf(searchRequest.getSimilarityThreshold()).floatValue(),
-                searchRequest.getFilterExpression());
+        float threshold = (float) searchRequest.getSimilarityThreshold();
+        // reverting l2_norm distance to its original value
+        if (options.getSimilarity().equals(SimilarityFunction.l2_norm)) {
+            threshold = 1 - threshold;
+        }
+        final float finalThreshold = threshold;
+        float[] vectors = this.embeddingModel.embed(searchRequest.getQuery());
+
+
+        return Mono.fromFuture(elasticsearchAsyncClient.search(
+                        buildQuery(searchRequest, vectors, finalThreshold), Document.class))
+                .flatMapMany(response -> Flux.fromIterable(response.hits().hits()))
+                .map(this::toDocument);
+
     }
 
-    public Flux<SearchResults> similaritySearch(float[] embedding, int topK, double similarityThreshold,
-                                                Filter.Expression filterExpression) {
-        return similaritySearch(
-                new co.elastic.clients.elasticsearch.core.SearchRequest.Builder().index(options.getIndexName())
-                        .query(getElasticsearchSimilarityQuery(embedding, filterExpression))
-                        .size(topK)
-                        .minScore(similarityThreshold)
-                        .build());
+    private Function<co.elastic.clients.elasticsearch.core.SearchRequest.Builder,
+            ObjectBuilder<co.elastic.clients.elasticsearch.core.SearchRequest>> buildQuery(SearchRequest searchRequest,
+                                                                                           float[] vectors,
+                                                                                           float finalThreshold) {
+        MatchQuery matchQuery = new MatchQuery.Builder()
+                .field("content")
+                .query(searchRequest.getQuery())
+                .boost(1.0f)
+                .build();
+
+
+        return sr -> sr.index(options.getIndexName())
+                .query(matchQuery._toQuery())
+                .knn(knn -> buildKnnQuery(searchRequest, vectors, finalThreshold, knn));
     }
 
-    private Query getElasticsearchSimilarityQuery(float[] embedding, Filter.Expression filterExpression) {
-        return Query.of(queryBuilder -> queryBuilder.scriptScore(scriptScoreQueryBuilder -> scriptScoreQueryBuilder
-                .query(queryBuilder2 -> queryBuilder2.queryString(queryStringQuerybuilder -> queryStringQuerybuilder
-                        .query(getElasticsearchQueryString(filterExpression))))
-                .script(scriptBuilder -> scriptBuilder
-                        .inline(inlineScriptBuilder -> inlineScriptBuilder.source(SimilarityFunction.cosine.name())
-                                .params("query_vector", JsonData.of(embedding))))));
+    private KnnSearch.Builder buildKnnQuery(SearchRequest searchRequest, float[] vectors, float finalThreshold, KnnSearch.Builder knn) {
+        return knn.queryVector(EmbeddingUtils.toList(vectors))
+                .similarity(finalThreshold)
+                .k((long) searchRequest.getTopK())
+                .field("embedding")
+                .numCandidates((long) (1.5 * searchRequest.getTopK()))
+                .filter(fl -> fl.queryString(
+                        qs -> qs.query(getElasticsearchQueryString(searchRequest.getFilterExpression()))));
     }
 
     private String getElasticsearchQueryString(Filter.Expression filterExpression) {
@@ -72,29 +122,43 @@ public class SearchService {
 
     }
 
-    private Flux<SearchResults> similaritySearch(co.elastic.clients.elasticsearch.core.SearchRequest searchRequest) {
-
-        return Mono.fromFuture(elasticsearchAsyncClient.search(searchRequest, Document.class))
-                .map(ResponseBody::hits)
-                .map(HitsMetadata::hits)
-                .flatMapIterable(list -> list)
-                .map(this::toDocument)
-                .onErrorResume(e -> Mono.just(new SearchResults("", "", "", 0)));
+    private SearchResults toDocument(Hit<Document> hit) {
+        assert hit.score() != null;
+        float v = calculateDistance(hit.score().floatValue());
+        Document document = hit.source();
+        assert document != null;
+        document.getMetadata().put("distance", v);
+        return new SearchResults(document.getContent(), document.getFormattedContent(), document.getId(), v);
     }
 
-    private SearchResults toDocument(Hit<Document> hit) {
-        Document document = hit.source();
-        float distance = 0;
-        if (hit.score() != null) {
-            distance = 1 - hit.score().floatValue();
+    // more info on score/distance calculation
+    // https://www.elastic.co/guide/en/elasticsearch/reference/current/knn-search.html#knn-similarity-search
+    private float calculateDistance(Float score) {
+        if (Objects.requireNonNull(options.getSimilarity()) == SimilarityFunction.l2_norm) {// the returned value of l2_norm is the opposite of the other functions
+            // (closest to zero means more accurate), so to make it consistent
+            // with the other functions the reverse is returned applying a "1-"
+            // to the standard transformation
+            return (float) (1 - (sqrt((1 / score) - 1)));
+            // cosine and dot_product
         }
-        if (document != null) {
-            if (hit.score() != null) {
-                document.getMetadata().put("distance", distance);
-            }
-        }
-        assert document != null;
-        return new SearchResults(document.getContent(), document.getFormattedContent(), document.getId(), distance);
+        return (2 * score) - 1;
+    }
 
+    public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
+        return VectorStoreObservationContext.builder(VectorStoreProvider.ELASTICSEARCH.value(), operationName)
+                .withCollectionName(this.options.getIndexName())
+                .withDimensions(this.embeddingModel.dimensions())
+                .withSimilarityMetric(getSimilarityMetric());
+    }
+
+    private static final Map<SimilarityFunction, VectorStoreSimilarityMetric> SIMILARITY_TYPE_MAPPING = Map.of(
+            SimilarityFunction.cosine, VectorStoreSimilarityMetric.COSINE, SimilarityFunction.l2_norm,
+            VectorStoreSimilarityMetric.EUCLIDEAN, SimilarityFunction.dot_product, VectorStoreSimilarityMetric.DOT);
+
+    private String getSimilarityMetric() {
+        if (!SIMILARITY_TYPE_MAPPING.containsKey(this.options.getSimilarity())) {
+            return this.options.getSimilarity().name();
+        }
+        return SIMILARITY_TYPE_MAPPING.get(this.options.getSimilarity()).value();
     }
 }
