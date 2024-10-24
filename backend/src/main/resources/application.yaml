@@ -9,12 +9,19 @@ spring:
         index-name: vector_index
         path-name: embedding
       elasticsearch:
-        dimensions: 1024
+        dimensions: 768
+        index-name: mpnet-document-index
+        initialize-schema: true
     ollama:
       chat:
         model: llama3.1
       embedding:
         model: mxbai-embed-large
+    embedding:
+      transformer:
+        enabled: false
+        onnx:
+          gpu-device-id: 0
   data:
     mongodb:
       uri: mongodb+srv://sidutti:1JtigZAmA4WeNOuM@sidchar.anzbaom.mongodb.net/?retryWrites=true&w=majority&appName=sidchar
@@ -29,8 +36,7 @@ spring:
   threads:
     virtual:
       enabled: true
-  aot:
-    enabled: true
+
 
 
 

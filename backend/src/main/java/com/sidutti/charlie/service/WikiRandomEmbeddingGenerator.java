@@ -6,6 +6,7 @@ import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.wiki.RandomWikiPage;
 import com.sidutti.charlie.repository.elastic.ElasticDocumentRepository;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -23,7 +24,7 @@ public class WikiRandomEmbeddingGenerator {
     private final ObjectMapper objectMapper;
     private final ElasticDocumentRepository documentRepository;
 
-    public WikiRandomEmbeddingGenerator(EmbeddingModel model,
+    public WikiRandomEmbeddingGenerator(@Qualifier("mpnetEmbedding") EmbeddingModel model,
                                         WebClient webClient,
                                         ObjectMapper objectMapper,
                                         ElasticDocumentRepository documentRepository) {

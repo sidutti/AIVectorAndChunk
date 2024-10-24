@@ -7,6 +7,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -28,7 +29,7 @@ public class PdfService {
 
 
     public PdfService(ElasticDocumentRepository documentRepository,
-                      EmbeddingModel model,
+                      @Qualifier("mpnetEmbedding") EmbeddingModel model,
                       SplitService splitService) {
         this.documentRepository = documentRepository;
         this.model = model;

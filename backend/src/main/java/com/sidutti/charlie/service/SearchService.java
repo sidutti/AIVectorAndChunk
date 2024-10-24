@@ -2,7 +2,6 @@ package com.sidutti.charlie.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch._types.KnnSearch;
-import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.ObjectBuilder;
@@ -23,13 +22,13 @@ import org.springframework.ai.vectorstore.observation.DefaultVectorStoreObservat
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
 import org.springframework.ai.vectorstore.observation.VectorStoreObservationDocumentation;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -47,7 +46,7 @@ public class SearchService {
     @Nullable
     private final VectorStoreObservationConvention customObservationConvention;
 
-    public SearchService(EmbeddingModel embeddingModel, ElasticsearchAsyncClient elasticsearchAsyncClient,
+    public SearchService(@Qualifier("mpnetEmbedding")EmbeddingModel embeddingModel, ElasticsearchAsyncClient elasticsearchAsyncClient,
                          ObservationRegistry observationRegistry,
                          @Nullable VectorStoreObservationConvention customObservationConvention
     ) {

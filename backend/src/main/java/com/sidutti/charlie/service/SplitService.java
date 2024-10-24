@@ -22,7 +22,7 @@ public class SplitService {
 
     public SplitService(SemanticChunkingService semanticChunkingService) {
         this.semanticChunkingService = semanticChunkingService;
-        this.splitter = DocumentSplitters.recursive(600, 30, new HuggingFaceTokenizer());
+        this.splitter = DocumentSplitters.recursive(384, 30, new HuggingFaceTokenizer());
     }
 
     public List<TextSegment> splitDocument(Root.Row row) {

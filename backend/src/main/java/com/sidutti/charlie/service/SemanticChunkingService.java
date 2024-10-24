@@ -3,6 +3,7 @@ package com.sidutti.charlie.service;
 
 import org.apache.lucene.index.VectorSimilarityFunction;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -14,7 +15,7 @@ public class SemanticChunkingService {
 
     private final EmbeddingModel embeddingModel;
 
-    public SemanticChunkingService(EmbeddingModel embeddingModel) {
+    public SemanticChunkingService(@Qualifier("mpnetEmbedding")EmbeddingModel embeddingModel) {
         this.embeddingModel = embeddingModel;
     }
 

@@ -10,6 +10,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,7 +35,11 @@ public class EmbeddingController {
     private final PdfService pdfService;
 
     @Autowired
-    public EmbeddingController(EmbeddingModel embeddingModel, WikiRandomEmbeddingGenerator generator, SearchService searchService, HuggingFaceService huggingFaceService, PdfService pdfService) {
+    public EmbeddingController(@Qualifier("mpnetEmbedding") EmbeddingModel embeddingModel,
+                               WikiRandomEmbeddingGenerator generator,
+                               SearchService searchService,
+                               HuggingFaceService huggingFaceService,
+                               PdfService pdfService) {
         this.embeddingModel = embeddingModel;
         this.generator = generator;
         this.searchService = searchService;

@@ -42,9 +42,11 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
-    /*implementation 'org.springframework.ai:spring-ai-transformers-spring-boot-starter'
+    implementation 'org.springframework.ai:spring-ai-transformers-spring-boot-starter'
     implementation 'com.microsoft.onnxruntime:onnxruntime_gpu:1.19.2'
-*/
+
+    implementation("com.google.protobuf:protobuf-java")
+    implementation("org.tribuo:tribuo-clustering-hdbscan:4.3.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation('org.springframework.ai:spring-ai-elasticsearch-store-spring-boot-starter')
     implementation('org.springframework.boot:spring-boot-starter-data-elasticsearch')
