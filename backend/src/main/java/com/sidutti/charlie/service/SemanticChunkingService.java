@@ -1,9 +1,7 @@
 package com.sidutti.charlie.service;
 
 
-import org.apache.lucene.index.VectorSimilarityFunction;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -15,7 +13,7 @@ public class SemanticChunkingService {
 
     private final EmbeddingModel embeddingModel;
 
-    public SemanticChunkingService(@Qualifier("mpnetEmbedding")EmbeddingModel embeddingModel) {
+    public SemanticChunkingService(EmbeddingModel embeddingModel) {
         this.embeddingModel = embeddingModel;
     }
 
@@ -101,8 +99,8 @@ public class SemanticChunkingService {
             String nextSentence = sentences.get(i + 1).get("combined_sentence");
             float[] currentEmbeddings = embeddingModel.embed(currentSentence);
             float[] nextEmbeddings = embeddingModel.embed(nextSentence);
-            double similarity = VectorSimilarityFunction.COSINE.compare(currentEmbeddings, nextEmbeddings);
-            double distance = 1 - similarity;
+
+            double distance = 1;
             distances.add(distance);
             sentences.get(i).put("distance_to_next", String.valueOf(distance));
         }

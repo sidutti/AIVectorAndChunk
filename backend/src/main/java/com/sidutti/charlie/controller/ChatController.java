@@ -5,6 +5,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +21,7 @@ import java.util.stream.Stream;
 public class ChatController {
     private final ChatModel chatModel;
 
-    public ChatController(ChatModel chatModel) {
+    public ChatController(VertexAiGeminiChatModel chatModel) {
         this.chatModel = chatModel;
     }
 

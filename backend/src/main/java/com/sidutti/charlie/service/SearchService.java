@@ -6,30 +6,20 @@ import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.ObjectBuilder;
 import com.sidutti.charlie.model.SearchResults;
-import io.micrometer.observation.ObservationRegistry;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.model.EmbeddingUtils;
-import org.springframework.ai.observation.conventions.VectorStoreProvider;
-import org.springframework.ai.observation.conventions.VectorStoreSimilarityMetric;
 import org.springframework.ai.vectorstore.ElasticsearchAiSearchFilterExpressionConverter;
 import org.springframework.ai.vectorstore.ElasticsearchVectorStoreOptions;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.SimilarityFunction;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
-import org.springframework.ai.vectorstore.observation.DefaultVectorStoreObservationConvention;
-import org.springframework.ai.vectorstore.observation.VectorStoreObservationContext;
-import org.springframework.ai.vectorstore.observation.VectorStoreObservationConvention;
-import org.springframework.ai.vectorstore.observation.VectorStoreObservationDocumentation;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -37,38 +27,22 @@ import static java.lang.Math.sqrt;
 
 @Component
 public class SearchService {
-    private static final VectorStoreObservationConvention DEFAULT_OBSERVATION_CONVENTION = new DefaultVectorStoreObservationConvention();
     private final EmbeddingModel embeddingModel;
     private final ElasticsearchVectorStoreOptions options = new ElasticsearchVectorStoreOptions();
     private final FilterExpressionConverter filterExpressionConverter;
     private final ElasticsearchAsyncClient elasticsearchAsyncClient;
-    private final ObservationRegistry observationRegistry;
-    @Nullable
-    private final VectorStoreObservationConvention customObservationConvention;
 
-    public SearchService(@Qualifier("mpnetEmbedding")EmbeddingModel embeddingModel, ElasticsearchAsyncClient elasticsearchAsyncClient,
-                         ObservationRegistry observationRegistry,
-                         @Nullable VectorStoreObservationConvention customObservationConvention
-    ) {
+
+    public SearchService(EmbeddingModel embeddingModel,
+                         ElasticsearchAsyncClient elasticsearchAsyncClient) {
         this.embeddingModel = embeddingModel;
         this.elasticsearchAsyncClient = elasticsearchAsyncClient;
-        this.observationRegistry = observationRegistry;
-        this.customObservationConvention = customObservationConvention;
         filterExpressionConverter = new ElasticsearchAiSearchFilterExpressionConverter();
 
     }
 
     public Flux<SearchResults> similaritySearch(SearchRequest request) {
-
-        VectorStoreObservationContext searchObservationContext = this
-                .createObservationContextBuilder(VectorStoreObservationContext.Operation.QUERY.value())
-                .withQueryRequest(request)
-                .build();
-
-        return VectorStoreObservationDocumentation.AI_VECTOR_STORE
-                .observation(this.customObservationConvention, DEFAULT_OBSERVATION_CONVENTION,
-                        () -> searchObservationContext, this.observationRegistry)
-                .observe(() -> this.doSimilaritySearch(request));
+        return this.doSimilaritySearch(request);
     }
 
     public Flux<SearchResults> doSimilaritySearch(SearchRequest searchRequest) {
@@ -143,21 +117,5 @@ public class SearchService {
         return (2 * score) - 1;
     }
 
-    public VectorStoreObservationContext.Builder createObservationContextBuilder(String operationName) {
-        return VectorStoreObservationContext.builder(VectorStoreProvider.ELASTICSEARCH.value(), operationName)
-                .withCollectionName(this.options.getIndexName())
-                .withDimensions(this.embeddingModel.dimensions())
-                .withSimilarityMetric(getSimilarityMetric());
-    }
 
-    private static final Map<SimilarityFunction, VectorStoreSimilarityMetric> SIMILARITY_TYPE_MAPPING = Map.of(
-            SimilarityFunction.cosine, VectorStoreSimilarityMetric.COSINE, SimilarityFunction.l2_norm,
-            VectorStoreSimilarityMetric.EUCLIDEAN, SimilarityFunction.dot_product, VectorStoreSimilarityMetric.DOT);
-
-    private String getSimilarityMetric() {
-        if (!SIMILARITY_TYPE_MAPPING.containsKey(this.options.getSimilarity())) {
-            return this.options.getSimilarity().name();
-        }
-        return SIMILARITY_TYPE_MAPPING.get(this.options.getSimilarity()).value();
-    }
 }

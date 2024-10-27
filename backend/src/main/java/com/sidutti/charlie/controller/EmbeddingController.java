@@ -1,16 +1,11 @@
 package com.sidutti.charlie.controller;
 
+import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.SearchResults;
-import com.sidutti.charlie.service.HuggingFaceService;
-import com.sidutti.charlie.service.PdfService;
-import com.sidutti.charlie.service.SearchService;
-import com.sidutti.charlie.service.WikiRandomEmbeddingGenerator;
-import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.embedding.EmbeddingResponse;
+import com.sidutti.charlie.service.*;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -20,38 +15,37 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 //enable cors for enabling cors
 @CrossOrigin(origins = "*")
 @RestController
 public class EmbeddingController {
-    private final EmbeddingModel embeddingModel;
+
     private final WikiRandomEmbeddingGenerator generator;
     private final SearchService searchService;
     private final HuggingFaceService huggingFaceService;
     private final PdfService pdfService;
+    private final SplitService splitService;
+    private final EmbeddingService embeddingService;
+    private final VectorService vectorService;
 
     @Autowired
-    public EmbeddingController(@Qualifier("mpnetEmbedding") EmbeddingModel embeddingModel,
-                               WikiRandomEmbeddingGenerator generator,
-                               SearchService searchService,
-                               HuggingFaceService huggingFaceService,
-                               PdfService pdfService) {
-        this.embeddingModel = embeddingModel;
+    public EmbeddingController(
+            WikiRandomEmbeddingGenerator generator,
+            SearchService searchService,
+            HuggingFaceService huggingFaceService,
+            PdfService pdfService, SplitService splitService, EmbeddingService embeddingService, VectorService vectorService) {
+
         this.generator = generator;
         this.searchService = searchService;
         this.huggingFaceService = huggingFaceService;
         this.pdfService = pdfService;
+        this.splitService = splitService;
+        this.embeddingService = embeddingService;
+        this.vectorService = vectorService;
     }
 
-    @GetMapping("/ai/embedding")
-    public Map<String, Object> embed(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-        EmbeddingResponse embeddingResponse = this.embeddingModel.embedForResponse(List.of(message));
-        return Map.of("embedding", embeddingResponse);
-    }
 
     @GetMapping("/ai/embedding/wiki")
     public Mono<Document> startEmbedding() {
@@ -59,16 +53,16 @@ public class EmbeddingController {
     }
 
     @GetMapping("/ai/math/embedding/start")
-    public Flux<Document> startMathEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
-                                             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+    public Flux<IndexResponse> startMathEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
+                                                  @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         long start = System.currentTimeMillis();
         return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize, "nvidia/OpenMathInstruct-1")
                 .doFinally(_ -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
     }
 
     @GetMapping("/ai/finance/embedding/start")
-    public Flux<Document> startFinanceEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
-                                                @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+    public Flux<IndexResponse> startFinanceEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
+                                                     @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         long start = System.currentTimeMillis();
         return huggingFaceService.createEmbeddingsFromHuggingFace(pageNumber, pageSize, "DeividasM/financial-instruction-aq22")
                 .doFinally(_ -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
@@ -93,10 +87,10 @@ public class EmbeddingController {
             paths.filter(Files::isRegularFile)
                     .parallel()
                     .map(pdfService::parseDocument)
-                    .map(pdfService::splitDocument)
+                    .map(splitService::splitDocument)
                     .flatMap(Collection::parallelStream)
-                    .map(pdfService::createDocument)
-                    .map(pdfService::saveDocument)
+                    .map(embeddingService::createEmbeddedDocument)
+                    .map(vectorService::saveDocument)
                     .forEach(Mono::subscribe);
         }
     }

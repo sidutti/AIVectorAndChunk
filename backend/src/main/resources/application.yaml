@@ -10,18 +10,19 @@ spring:
         path-name: embedding
       elasticsearch:
         dimensions: 768
-        index-name: mpnet-document-index
         initialize-schema: true
     ollama:
       chat:
-        model: llama3.1
+        model: gemma2
       embedding:
         model: mxbai-embed-large
-    embedding:
-      transformer:
-        enabled: false
-        onnx:
-          gpu-device-id: 0
+    vertex:
+      ai:
+        gemini:
+          projectId: basicdocumentai
+          location: us-central1
+
+
   data:
     mongodb:
       uri: mongodb+srv://sidutti:1JtigZAmA4WeNOuM@sidchar.anzbaom.mongodb.net/?retryWrites=true&w=majority&appName=sidchar

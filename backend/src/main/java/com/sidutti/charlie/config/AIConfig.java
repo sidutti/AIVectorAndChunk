@@ -6,17 +6,12 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.transformers.TransformersEmbeddingModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
-
-import java.util.Map;
 
 @Configuration
 public class AIConfig {
@@ -48,15 +43,5 @@ public class AIConfig {
     @Bean
     public ElasticsearchAsyncClient elasticsearchAsyncClient(org.elasticsearch.client.RestClient restClient, ObjectMapper objectMapper) {
         return new ElasticsearchAsyncClient(new RestClientTransport(restClient, new JacksonJsonpMapper(objectMapper)));
-    }
-
-    @Primary
-    @Bean("mpnetEmbedding")
-    public EmbeddingModel embeddingModel() {
-        TransformersEmbeddingModel embeddingModel = new TransformersEmbeddingModel();
-        embeddingModel.setTokenizerResource("file:/nas/CodeDataset/hfdownload/sentence-transformers_all-mpnet-base-v2/tokenizer.json");
-        embeddingModel.setModelResource("file:/nas/CodeDataset/hfdownload/sentence-transformers_all-mpnet-base-v2/onnx/model.onnx");
-        embeddingModel.setTokenizerOptions(Map.of("padding", "true"));
-        return embeddingModel;
     }
 }
