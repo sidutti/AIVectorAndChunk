@@ -37,8 +37,8 @@ spring:
   threads:
     virtual:
       enabled: true
-
-
-
-
-
+cloud:
+  google:
+    project-id: basicdocumentai
+    location: us
+    processer-id: 8fcc58a8a720a50d

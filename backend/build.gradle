@@ -5,6 +5,10 @@ plugins {
     id 'org.graalvm.buildtools.native' version "${nativeVersion}"
 }
 
+ext {
+    springCloudGcpVersion = "5.7.0"
+}
+
 group = 'com.sidutti.charlie'
 version = '24.8.0-SNAPSHOT'
 
@@ -39,6 +43,10 @@ configurations {
 dependencies {
 
 
+    //implementation platform('com.google.cloud:libraries-bom:26.43.0')
+
+    implementation("com.google.cloud:google-cloud-document-ai:2.56.0")
+
 
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
@@ -49,8 +57,6 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-data-elasticsearch')
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation('org.springframework.ai:spring-ai-tika-document-reader')
-
-
 /*
     implementation "org.apache.james:apache-mime4j-core:${mime4j}"
     implementation "org.apache.commons:commons-compress:${commonsCompress}"
@@ -64,6 +70,7 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+        mavenBom "com.google.cloud:spring-cloud-gcp-dependencies:$springCloudGcpVersion"
     }
 }
 

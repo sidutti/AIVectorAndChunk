@@ -1,18 +1,23 @@
 package com.sidutti.charlie.controller;
 
+import com.google.cloud.documentai.v1.Document;
+import com.sidutti.charlie.cloud.google.DocumentService;
 import com.sidutti.charlie.model.ChatData;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.model.Media;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.MimeType;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -20,15 +25,36 @@ import java.util.stream.Stream;
 @RestController
 public class ChatController {
     private final ChatModel chatModel;
+    private final DocumentService service;
 
-    public ChatController(VertexAiGeminiChatModel chatModel) {
+    public ChatController(VertexAiGeminiChatModel chatModel, DocumentService service) {
         this.chatModel = chatModel;
+        this.service = service;
     }
 
     @PostMapping(value = "/ai/chat", produces = MediaType.APPLICATION_JSON_VALUE)
     public Flux<ChatData> chat(@RequestBody String question) {
         return chatModel.stream(question)
                 .map(ChatData::new);
+    }
+
+
+    @GetMapping(value = "/ai/summarize/{fileName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Flux<String> summarize(@PathVariable String fileName) throws MalformedURLException {
+        var newFullPath = "/nas/Backup-6-3/" + fileName;
+        //get resource from path
+
+        var userMessage = new UserMessage("Based on the provided document tell me what it is and your confidence level",
+                List.of(new Media(MimeType.valueOf("application/pdf"), new FileSystemResource(newFullPath))));
+
+        return chatModel.stream(userMessage);
+    }
+
+    @GetMapping(value = "/ai/extract/{fileName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Document extract(@PathVariable String fileName) throws IOException {
+        var newFullPath = "/nas/Backup-6-3/" + fileName;
+        //get resource from path
+        return service.processDocument(newFullPath);
     }
 
     @PostMapping(value = "/ai/rag/generate", produces = MediaType.APPLICATION_JSON_VALUE)
