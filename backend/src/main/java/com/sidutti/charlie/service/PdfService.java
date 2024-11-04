@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
@@ -14,7 +15,8 @@ public class PdfService {
 
 
     public Document parseDocument(Path path) {
-        TikaDocumentReader parser = new TikaDocumentReader(path.toAbsolutePath().toString());
+        FileSystemResource resource = new FileSystemResource(path.toAbsolutePath().toString());
+        TikaDocumentReader parser = new TikaDocumentReader(resource);
         LOGGER.debug("Path to File {}", path);
         var parsedDoc = parser.get().getFirst();
         parsedDoc.getMetadata().put("file", path.toAbsolutePath().toString());

@@ -1,8 +1,8 @@
 package com.sidutti.charlie.controller;
 
-import com.google.cloud.documentai.v1.Document;
 import com.sidutti.charlie.cloud.google.DocumentService;
 import com.sidutti.charlie.model.ChatData;
+import com.sidutti.charlie.model.ExtractedDocument;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -39,22 +39,17 @@ public class ChatController {
     }
 
 
-    @GetMapping(value = "/ai/summarize/{fileName}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Flux<String> summarize(@PathVariable String fileName) throws MalformedURLException {
-        var newFullPath = "/nas/Backup-6-3/" + fileName;
-        //get resource from path
-
+    @GetMapping(value = "/ai/summarize", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Flux<String> summarize(@RequestParam(value = "fileName") String fileName) throws MalformedURLException {
         var userMessage = new UserMessage("Based on the provided document tell me what it is and your confidence level",
-                List.of(new Media(MimeType.valueOf("application/pdf"), new FileSystemResource(newFullPath))));
+                List.of(new Media(MimeType.valueOf("application/pdf"), new FileSystemResource(fileName))));
 
         return chatModel.stream(userMessage);
     }
 
-    @GetMapping(value = "/ai/extract/{fileName}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Document extract(@PathVariable String fileName) throws IOException {
-        var newFullPath = "/nas/Backup-6-3/" + fileName;
-        //get resource from path
-        return service.processDocument(newFullPath);
+    @GetMapping(value = "/ai/extract", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ExtractedDocument extract(@RequestParam(value = "fileName") String fileName) throws IOException {
+        return service.processDocument(fileName);
     }
 
     @PostMapping(value = "/ai/rag/generate", produces = MediaType.APPLICATION_JSON_VALUE)

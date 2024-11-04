@@ -5,13 +5,19 @@ import com.google.cloud.documentai.v1.DocumentProcessorServiceClient;
 import com.google.cloud.documentai.v1.ProcessRequest;
 import com.google.cloud.documentai.v1.RawDocument;
 import com.google.protobuf.ByteString;
+import com.sidutti.charlie.model.ExtractedDocument;
+import com.sidutti.charlie.model.Page;
+import com.sidutti.charlie.model.Paragraph;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class DocumentService {
@@ -26,7 +32,7 @@ public class DocumentService {
     }
 
 
-    public Document processDocument(String filePath) throws IOException {
+    public ExtractedDocument processDocument(String filePath) throws IOException {
 
         byte[] imageFileData = Files.readAllBytes(Paths.get(filePath));
         ByteString content = ByteString.copyFrom(imageFileData);
@@ -38,30 +44,24 @@ public class DocumentService {
 
         Document documentResponse = client.processDocument(request).getDocument();
         String text = documentResponse.getText();
-        System.out.println("The document contains the following paragraphs:");
+
+        List<Page> pages = new ArrayList<>();
         for (Document.Page page : documentResponse.getPagesList()) {
             List<Document.Page.Paragraph> paragraphs = page.getParagraphsList();
-
+            List<Paragraph> paras = new ArrayList<>();
             for (Document.Page.Paragraph paragraph : paragraphs) {
                 String paragraphText = getText(paragraph.getLayout().getTextAnchor(), text);
-                System.out.printf("Paragraph text:\n%s\n", paragraphText);
+                paras.add(new Paragraph(paragraphText));
             }
-
-            // Form parsing provides additional output about
-            // form-formatted PDFs. You must create a form
-            // processor in the Cloud Console to see full field details.
-            System.out.println("The following form key/value pairs were detected:");
-
+            Map<String, String> fields = new HashMap<>();
             for (Document.Page.FormField field : page.getFormFieldsList()) {
                 String fieldName = getText(field.getFieldName().getTextAnchor(), text);
                 String fieldValue = getText(field.getFieldValue().getTextAnchor(), text);
-
-                System.out.println("Extracted form fields pair:");
-                System.out.printf("\t(%s, %s))\n", fieldName, fieldValue);
+                fields.put(fieldName, fieldValue);
             }
+            pages.add(new Page(paras, fields));
         }
-        return documentResponse;
-
+        return new ExtractedDocument(pages);
     }
 
 
