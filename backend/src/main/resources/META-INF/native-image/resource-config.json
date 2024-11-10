@@ -65,6 +65,8 @@
   }, {
     "pattern":"\\Qapplication.yml\\E"
   }, {
+    "pattern":"\\Qirslist.txt\\E"
+  }, {
     "pattern":"\\Qbanner.txt\\E"
   }, {
     "pattern":"\\Qcom/knuddels/jtokkit/cl100k_base.tiktoken\\E"

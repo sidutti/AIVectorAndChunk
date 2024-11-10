@@ -4,23 +4,32 @@ import co.elastic.clients.elasticsearch.core.IndexResponse;
 import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.SearchResults;
 import com.sidutti.charlie.service.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.RetryBackoffSpec;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Stream;
 
+
 //enable cors for enabling cors
 @CrossOrigin(origins = "*")
 @RestController
 public class EmbeddingController {
+    private final Logger LOGGER = LoggerFactory.getLogger(EmbeddingController.class);
 
     private final WikiRandomEmbeddingGenerator generator;
     private final SearchService searchService;
@@ -29,13 +38,14 @@ public class EmbeddingController {
     private final SplitService splitService;
     private final EmbeddingService embeddingService;
     private final VectorService vectorService;
+    private final WebClient client;
 
     @Autowired
     public EmbeddingController(
             WikiRandomEmbeddingGenerator generator,
             SearchService searchService,
             HuggingFaceService huggingFaceService,
-            PdfService pdfService, SplitService splitService, EmbeddingService embeddingService, VectorService vectorService) {
+            PdfService pdfService, SplitService splitService, EmbeddingService embeddingService, VectorService vectorService, WebClient client) {
 
         this.generator = generator;
         this.searchService = searchService;
@@ -44,6 +54,7 @@ public class EmbeddingController {
         this.splitService = splitService;
         this.embeddingService = embeddingService;
         this.vectorService = vectorService;
+        this.client = client;
     }
 
 
@@ -94,4 +105,37 @@ public class EmbeddingController {
                     .forEach(Mono::subscribe);
         }
     }
+
+    @PostMapping("/ai/irs/embedding/start")
+    public void chunkAndStoreIRS() {
+        try (InputStream resourceAsStream = new ClassPathResource("irslist.txt").getInputStream();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                //sleep for 5 sec
+
+                client
+                        .get()
+                        .uri(line)
+                        .retrieve()
+
+                        .bodyToFlux(DataBuffer.class)
+                        .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
+                        .reduce(InputStream.nullInputStream(), (s, d)
+                                -> new SequenceInputStream(s, d.asInputStream(true)))
+                        .map(InputStreamResource::new)
+                        .map(pdfService::parseDocument)
+                        .map(splitService::splitDocument)
+                        .map(embeddingService::createEmbeddedDocument)
+                        .map(vectorService::saveDocument)
+                        .flatMap(mono -> mono)
+                        .subscribe();
+
+            }
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+
 }
