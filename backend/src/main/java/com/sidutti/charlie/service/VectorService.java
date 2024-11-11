@@ -13,7 +13,7 @@ import java.util.List;
 @Component
 public class VectorService {
     private final ElasticsearchAsyncClient client;
-    private final String indexName = "spring-ai-document-index";
+    private final String indexName = "irs-ai-index";
     public VectorService(ElasticsearchAsyncClient client) {
         this.client = client;
     }

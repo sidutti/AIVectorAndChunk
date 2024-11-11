@@ -1,6 +1,8 @@
 package com.sidutti.charlie.controller;
 
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.SearchResults;
 import com.sidutti.charlie.service.*;
@@ -21,7 +23,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 
@@ -108,34 +112,42 @@ public class EmbeddingController {
 
     @PostMapping("/ai/irs/embedding/start")
     public void chunkAndStoreIRS() {
+        List<Mono<BulkResponse>> responseList = new ArrayList<>();
         try (InputStream resourceAsStream = new ClassPathResource("irslist.txt").getInputStream();
              BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 //sleep for 5 sec
+                responseList.add(
+                        client
+                                .get()
+                                .uri(line)
+                                .retrieve()
 
-                client
-                        .get()
-                        .uri(line)
-                        .retrieve()
-
-                        .bodyToFlux(DataBuffer.class)
-                        .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
-                        .reduce(InputStream.nullInputStream(), (s, d)
-                                -> new SequenceInputStream(s, d.asInputStream(true)))
-                        .map(InputStreamResource::new)
-                        .map(pdfService::parseDocument)
-                        .map(splitService::splitDocument)
-                        .map(embeddingService::createEmbeddedDocument)
-                        .map(vectorService::saveDocument)
-                        .flatMap(mono -> mono)
-                        .subscribe();
+                                .bodyToFlux(DataBuffer.class)
+                                .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
+                                .reduce(InputStream.nullInputStream(), (s, d)
+                                        -> new SequenceInputStream(s, d.asInputStream(true)))
+                                .map(InputStreamResource::new)
+                                .map(pdfService::parseDocument)
+                                .map(splitService::splitDocument)
+                                .map(embeddingService::createEmbeddedDocument)
+                                .map(vectorService::saveDocument)
+                                .flatMap(mono -> mono)
+                );
 
             }
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
+        responseList.forEach(m -> m.subscribe(this::processBulkResponse));
     }
 
+    private void processBulkResponse(BulkResponse bulkResponse) {
+        LOGGER.info("Ingest took={} there were errors={} and total Items={}", bulkResponse.took(), bulkResponse.errors(), bulkResponse.items().size());
+        for (BulkResponseItem item : bulkResponse.items()) {
+            LOGGER.error(String.valueOf(item.error()));
+        }
+    }
 
 }

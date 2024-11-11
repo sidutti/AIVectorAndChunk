@@ -9,13 +9,14 @@ spring:
         index-name: vector_index
         path-name: embedding
       elasticsearch:
-        dimensions: 768
+        dimensions: 1024
         initialize-schema: true
+        index-name: irs-ai-index
     ollama:
       chat:
         model: gemma2
       embedding:
-        model: mxbai-embed-large
+          model: mxbai-embed-large
     vertex:
       ai:
         gemini:
