@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -39,6 +40,21 @@ public class DocumentService {
         RawDocument document =
                 RawDocument.newBuilder().setContent(content).setMimeType("application/pdf").build();
 
+        return callGoogleAndExtract(document);
+    }
+    public ExtractedDocument processDocument(InputStream is){
+        ByteString content;
+        try {
+            content = ByteString.copyFrom(is.readAllBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        RawDocument document =
+                RawDocument.newBuilder().setContent(content).setMimeType("application/pdf").build();
+        return callGoogleAndExtract(document);
+    }
+
+    private ExtractedDocument callGoogleAndExtract(RawDocument document) {
         ProcessRequest request =
                 ProcessRequest.newBuilder().setName(name).setRawDocument(document).build();
 

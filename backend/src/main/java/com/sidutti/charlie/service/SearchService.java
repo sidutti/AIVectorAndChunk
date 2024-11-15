@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.ObjectBuilder;
 import com.sidutti.charlie.model.SearchResults;
+import org.springframework.ai.autoconfigure.vectorstore.elasticsearch.ElasticsearchVectorStoreProperties;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.model.EmbeddingUtils;
@@ -17,6 +18,7 @@ import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,11 +36,22 @@ public class SearchService {
 
 
     public SearchService(EmbeddingModel embeddingModel,
-                         ElasticsearchAsyncClient elasticsearchAsyncClient) {
+                         ElasticsearchAsyncClient elasticsearchAsyncClient,
+                         ElasticsearchVectorStoreProperties properties) {
         this.embeddingModel = embeddingModel;
         this.elasticsearchAsyncClient = elasticsearchAsyncClient;
         filterExpressionConverter = new ElasticsearchAiSearchFilterExpressionConverter();
 
+
+        if (StringUtils.hasText(properties.getIndexName())) {
+            options.setIndexName(properties.getIndexName());
+        }
+        if (properties.getDimensions() != null) {
+            options.setDimensions(properties.getDimensions());
+        }
+        if (properties.getSimilarity() != null) {
+            options.setSimilarity(properties.getSimilarity());
+        }
     }
 
     public Flux<SearchResults> similaritySearch(SearchRequest request) {

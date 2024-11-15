@@ -123,7 +123,6 @@ public class EmbeddingController {
                                 .get()
                                 .uri(line)
                                 .retrieve()
-
                                 .bodyToFlux(DataBuffer.class)
                                 .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
                                 .reduce(InputStream.nullInputStream(), (s, d)
