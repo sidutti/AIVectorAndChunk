@@ -9,9 +9,9 @@ spring:
         index-name: vector_index
         path-name: embedding
       elasticsearch:
-        dimensions: 1024
+        dimensions: 768
         initialize-schema: true
-        index-name: irs-ai-index
+        index-name: google-ai-index
     ollama:
       chat:
         model: gemma2
@@ -19,10 +19,13 @@ spring:
           model: mxbai-embed-large
     vertex:
       ai:
+        embedding:
+          text:
+            enabled: true
         gemini:
           projectId: basicdocumentai
           location: us-central1
-          credentialsUri: file:/nas/CodeDataset/keys/serviceaccount.json
+          credentialsUri: file:/mnt/nas/CodeDataset/keys/serviceaccount.json
 
   data:
     mongodb:
@@ -40,7 +43,7 @@ spring:
       enabled: true
 cloud:
   google:
-    cred-path: '/nas/CodeDataset/keys/serviceaccount.json'
+    cred-path: '/mnt/nas/CodeDataset/keys/serviceaccount.json'
     project-id: basicdocumentai
     location: us
     processer-id: 5b561e1fd378c67a

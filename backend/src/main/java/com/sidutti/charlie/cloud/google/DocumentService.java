@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,15 +31,7 @@ public class DocumentService {
     }
 
 
-    public ExtractedDocument processDocument(String filePath) throws IOException {
 
-        byte[] imageFileData = Files.readAllBytes(Paths.get(filePath));
-        ByteString content = ByteString.copyFrom(imageFileData);
-        RawDocument document =
-                RawDocument.newBuilder().setContent(content).setMimeType("application/pdf").build();
-
-        return callGoogleAndExtract(document);
-    }
     public ExtractedDocument processDocument(InputStream is){
         ByteString content;
         try {
@@ -53,7 +43,18 @@ public class DocumentService {
                 RawDocument.newBuilder().setContent(content).setMimeType("application/pdf").build();
         return callGoogleAndExtract(document);
     }
+    private String getTextFromBlock(Document.DocumentLayout.DocumentLayoutBlock block, String text) {
 
+        StringBuilder blockTextBuilder = new StringBuilder();
+        for(Document.DocumentLayout.DocumentLayoutBlock segment : block.getTextBlock().getBlocksList()){
+           if(segment.hasTextBlock()){
+               blockTextBuilder.append(segment.getTextBlock().getText());
+           }
+           getTextFromBlock(segment, blockTextBuilder.toString());
+        }
+        return blockTextBuilder.toString();
+
+    }
     private ExtractedDocument callGoogleAndExtract(RawDocument document) {
         ProcessRequest request =
                 ProcessRequest.newBuilder().setName(name).setRawDocument(document).build();

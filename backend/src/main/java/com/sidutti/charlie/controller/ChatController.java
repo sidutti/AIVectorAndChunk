@@ -6,29 +6,33 @@ import com.sidutti.charlie.model.ExtractedDocument;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.RetryBackoffSpec;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
-import java.net.MalformedURLException;
 import java.util.List;
-import java.util.stream.Stream;
 
-@CrossOrigin(origins = "*")
-@RestController
+import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RouterFunctions.route;
+
+
+@Configuration
 public class ChatController {
     private final ChatModel chatModel;
     private final DocumentService service;
@@ -40,29 +44,79 @@ public class ChatController {
         this.client = client;
     }
 
-    @PostMapping(value = "/ai/chat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Flux<ChatData> chat(@RequestBody String question) {
-        return chatModel.stream(question)
+    @Bean
+    public RouterFunction<ServerResponse> chattingRoutes() {
+        return route(POST("ai/chat"), this::chat)
+                .andRoute(POST("ai/summarize"), this::summarize)
+                .andRoute(POST("/ai/extract"), this::extract)
+                .andRoute(POST("/ai/rag/generate"), this::rag)
+                .andRoute(POST("/ai/extract/irs"), this::extractIrs);
+    }
+
+    public Mono<ServerResponse> chat(ServerRequest request) {
+        Flux<ChatData> result = request.bodyToMono(String.class)
+                .map(chatModel::stream)
+                .flatMapMany(t -> t)
                 .map(ChatData::new);
+        return ServerResponse.ok().body(result, ChatData.class);
     }
 
+    public Mono<ServerResponse> summarize(ServerRequest request) {
+        Flux<ChatData> result = request.body(BodyExtractors.toDataBuffers())
+                .reduce(InputStream.nullInputStream(), (s, d)
+                        -> new SequenceInputStream(s, d.asInputStream(true)))
+                .map(InputStreamResource::new)
+                .map(is -> new UserMessage("Based on the provided document tell me what it is and your confidence level",
+                        List.of(new Media(MimeType.valueOf("application/pdf"), is))))
+                .map(chatModel::stream)
+                .flatMapMany(t -> t)
+                .map(ChatData::new);
 
-    @GetMapping(value = "/ai/summarize", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Flux<String> summarize(@RequestParam(value = "fileName") String fileName) throws MalformedURLException {
-        var userMessage = new UserMessage("Based on the provided document tell me what it is and your confidence level",
-                List.of(new Media(MimeType.valueOf("application/pdf"), new FileSystemResource(fileName))));
-
-        return chatModel.stream(userMessage);
+        return ServerResponse.ok().body(result, ChatData.class);
     }
 
-    @GetMapping(value = "/ai/extract", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ExtractedDocument extract(@RequestParam(value = "fileName") String fileName) throws IOException {
-        return service.processDocument(fileName);
+    public Mono<ServerResponse> extract(ServerRequest request) {
+        Mono<ExtractedDocument> result = request.body(BodyExtractors.toDataBuffers())
+                .reduce(InputStream.nullInputStream(), (s, d)
+                        -> new SequenceInputStream(s, d.asInputStream(true)))
+                .map(service::processDocument);
+
+        return ServerResponse.ok().body(result, ChatData.class);
     }
 
-    @PostMapping(value = "/ai/rag/generate", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Flux<ChatData> rag(@RequestBody String question) {
-        String[] inputs = question.split("###");
+    public Mono<ServerResponse> rag(ServerRequest request) {
+        Flux<ChatData> result = request.bodyToMono(String.class)
+                .map(s -> s.split("###"))
+                .map(this::getPrompt)
+                .map(chatModel::stream)
+                .flatMapMany(t -> t)
+                .map(ChatResponse::getResults)
+                .flatMapIterable(l -> l)
+                .map(g -> new ChatData(g.getOutput().getContent()));
+
+        return ServerResponse.ok().body(result, ChatData.class);
+    }
+
+    public Mono<ServerResponse> extractIrs(ServerRequest request) {
+        Mono<ExtractedDocument> result = request.bodyToMono(String.class)
+                .flatMap(this::extractDocFromIRS)
+                .map(service::processDocument);
+        return ServerResponse.ok().body(result, ExtractedDocument.class);
+
+    }
+
+    private Mono<InputStream> extractDocFromIRS(String url) {
+        return client
+                .get()
+                .uri(url)
+                .retrieve()
+                .bodyToFlux(DataBuffer.class)
+                .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
+                .reduce(InputStream.nullInputStream(), (s, d)
+                        -> new SequenceInputStream(s, d.asInputStream(true)));
+    }
+
+    private Prompt getPrompt(String[] inputs) {
         String PROMPT_BLUEPRINT = """
                   Answer the query strictly referring the provided context:
                   {context}
@@ -74,27 +128,6 @@ public class ChatController {
         PromptTemplate promptTemplate = new PromptTemplate(PROMPT_BLUEPRINT);
         promptTemplate.add("query", inputs[0]);
         promptTemplate.add("context", inputs[1]);
-        return chatModel.stream(promptTemplate.create())
-                .map(ChatResponse::getResults)
-                .map(this::createChatData)
-                .flatMapIterable(Stream::toList);
-    }
-
-    private Stream<ChatData> createChatData(List<Generation> generations) {
-        return generations.stream().map(generation -> new ChatData(generation.getOutput().getContent()));
-    }
-
-    @GetMapping(value = "/ai/extract/irs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ExtractedDocument> extractIrs(@RequestBody String url) throws IOException {
-        return client
-                .get()
-                .uri(url)
-                .retrieve()
-                .bodyToFlux(DataBuffer.class)
-                .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
-                .reduce(InputStream.nullInputStream(), (s, d)
-                        -> new SequenceInputStream(s, d.asInputStream(true)))
-                .map(service::processDocument);
-
+        return promptTemplate.create();
     }
 }

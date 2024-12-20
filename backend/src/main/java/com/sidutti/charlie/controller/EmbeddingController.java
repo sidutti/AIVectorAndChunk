@@ -1,9 +1,6 @@
 package com.sidutti.charlie.controller;
 
-import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
-import com.sidutti.charlie.model.Document;
 import com.sidutti.charlie.model.SearchResults;
 import com.sidutti.charlie.service.*;
 import org.slf4j.Logger;
@@ -23,9 +20,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Stream;
 
 
@@ -35,7 +31,7 @@ import java.util.stream.Stream;
 public class EmbeddingController {
     private final Logger LOGGER = LoggerFactory.getLogger(EmbeddingController.class);
 
-    private final WikiRandomEmbeddingGenerator generator;
+
     private final SearchService searchService;
     private final HuggingFaceService huggingFaceService;
     private final PdfService pdfService;
@@ -46,12 +42,10 @@ public class EmbeddingController {
 
     @Autowired
     public EmbeddingController(
-            WikiRandomEmbeddingGenerator generator,
+
             SearchService searchService,
             HuggingFaceService huggingFaceService,
             PdfService pdfService, SplitService splitService, EmbeddingService embeddingService, VectorService vectorService, WebClient client) {
-
-        this.generator = generator;
         this.searchService = searchService;
         this.huggingFaceService = huggingFaceService;
         this.pdfService = pdfService;
@@ -61,11 +55,6 @@ public class EmbeddingController {
         this.client = client;
     }
 
-
-    @GetMapping("/ai/embedding/wiki")
-    public Mono<Document> startEmbedding() {
-        return generator.generateRandomEmbedding();
-    }
 
     @GetMapping("/ai/math/embedding/start")
     public Flux<IndexResponse> startMathEmbedding(@RequestParam(value = "pageNumber", defaultValue = "10") int pageNumber,
@@ -112,41 +101,36 @@ public class EmbeddingController {
 
     @PostMapping("/ai/irs/embedding/start")
     public void chunkAndStoreIRS() {
-        List<Mono<BulkResponse>> responseList = new ArrayList<>();
+
         try (InputStream resourceAsStream = new ClassPathResource("irslist.txt").getInputStream();
              BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 //sleep for 5 sec
-                responseList.add(
-                        client
-                                .get()
-                                .uri(line)
-                                .retrieve()
-                                .bodyToFlux(DataBuffer.class)
-                                .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
-                                .reduce(InputStream.nullInputStream(), (s, d)
-                                        -> new SequenceInputStream(s, d.asInputStream(true)))
-                                .map(InputStreamResource::new)
-                                .map(pdfService::parseDocument)
-                                .map(splitService::splitDocument)
-                                .map(embeddingService::createEmbeddedDocument)
-                                .map(vectorService::saveDocument)
-                                .flatMap(mono -> mono)
-                );
+
+                client
+                        .get()
+                        .uri(line)
+                        .retrieve()
+                        .bodyToFlux(DataBuffer.class)
+                        .retryWhen(RetryBackoffSpec.backoff(3, Duration.ofSeconds(10)))
+                        .reduce(InputStream.nullInputStream(), (s, d)
+                                -> new SequenceInputStream(s, d.asInputStream(true)))
+                        .map(InputStreamResource::new)
+                        .map(pdfService::parseDocument)
+                        .map(splitService::splitDocument)
+                        .flatMapIterable(list -> list)
+                        .map(embeddingService::createEmbeddedDocument)
+
+                        .map(vectorService::saveDocument)
+                        .flatMap(mono -> mono)
+                        .subscribe();
 
             }
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
-        responseList.forEach(m -> m.subscribe(this::processBulkResponse));
     }
 
-    private void processBulkResponse(BulkResponse bulkResponse) {
-        LOGGER.info("Ingest took={} there were errors={} and total Items={}", bulkResponse.took(), bulkResponse.errors(), bulkResponse.items().size());
-        for (BulkResponseItem item : bulkResponse.items()) {
-            LOGGER.error(String.valueOf(item.error()));
-        }
-    }
 
 }

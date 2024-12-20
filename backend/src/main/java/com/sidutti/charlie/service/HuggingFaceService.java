@@ -5,8 +5,12 @@ import com.sidutti.charlie.model.Root;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.RetryBackoffSpec;
+
+import java.net.URI;
 
 @Component
 public class HuggingFaceService {
@@ -29,18 +33,11 @@ public class HuggingFaceService {
         return webClient
                 .get()
                 .uri(uriBuilder ->
-                        uriBuilder.host("datasets-server.huggingface.co")
-                                .scheme("https")
-                                .path("rows")
-                                .queryParam("dataset", dataset)
-                                .queryParam("config", "default")
-                                .queryParam("split", "train")
-                                .queryParam("offset", pageNumber)
-                                .queryParam("length", numberOfRows)
-                                .build())
+                        createUri(pageNumber, numberOfRows, dataset, uriBuilder))
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(Root.class)
+                .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
                 .map(Root::rows)
                 .flatMapIterable(list -> list)
                 .map(Root.RootRow::row)
@@ -53,6 +50,18 @@ public class HuggingFaceService {
                     System.out.println("Error creating document: " + e.getMessage());
                     return Mono.empty();
                 });
+    }
+
+    private static URI createUri(int pageNumber, int numberOfRows, String dataset, UriBuilder uriBuilder) {
+        return uriBuilder.host("datasets-server.huggingface.co")
+                .scheme("https")
+                .path("rows")
+                .queryParam("dataset", dataset)
+                .queryParam("config", "default")
+                .queryParam("split", "train")
+                .queryParam("offset", pageNumber)
+                .queryParam("length", numberOfRows)
+                .build();
     }
 
 }

@@ -95,9 +95,9 @@ public class SearchService {
     private KnnSearch.Builder buildKnnQuery(SearchRequest searchRequest, float[] vectors, float finalThreshold, KnnSearch.Builder knn) {
         return knn.queryVector(EmbeddingUtils.toList(vectors))
                 .similarity(finalThreshold)
-                .k((long) searchRequest.getTopK())
+                .k(searchRequest.getTopK())
                 .field("embedding")
-                .numCandidates((long) (1.5 * searchRequest.getTopK()))
+                .numCandidates((int) (1.5 * searchRequest.getTopK()))
                 .filter(fl -> fl.queryString(
                         qs -> qs.query(getElasticsearchQueryString(searchRequest.getFilterExpression()))));
     }
