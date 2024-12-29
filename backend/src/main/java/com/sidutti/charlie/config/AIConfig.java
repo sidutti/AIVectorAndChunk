@@ -7,14 +7,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.aiplatform.v1.PredictionServiceSettings;
 import com.google.cloud.vertexai.VertexAI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.autoconfigure.vertexai.gemini.VertexAiGeminiConnectionProperties;
-import org.springframework.ai.vertexai.embedding.VertexAiEmbeddingConnectionDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -92,20 +89,19 @@ public class AIConfig {
         }
         return vertexAIBuilder.build();
     }
-    @Bean
-    public VertexAiEmbeddingConnectionDetails createConnection(VertexAiGeminiConnectionProperties connectionProperties) throws IOException {
-        GoogleCredentials credentials = GoogleCredentials
-                .fromStream(connectionProperties.getCredentialsUri().getInputStream())
-                .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
-        PredictionServiceSettings predictionServiceSettings = PredictionServiceSettings.newBuilder()
-                .setEndpoint(connectionProperties.getApiEndpoint())
-                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
-                .build();
-        return VertexAiEmbeddingConnectionDetails.builder()
-                .withProjectId(connectionProperties.getProjectId())
-                .withLocation(connectionProperties.getLocation())
-                .withApiEndpoint(connectionProperties.getApiEndpoint())
-                .withPredictionServiceSettings(predictionServiceSettings)
-                .build();
-    }
+//    @Bean
+//    public VertexAiEmbeddingConnectionDetails createConnection(VertexAiGeminiConnectionProperties connectionProperties) throws IOException {
+//        GoogleCredentials credentials = GoogleCredentials
+//                .fromStream(connectionProperties.getCredentialsUri().getInputStream())
+//                .createScoped(List.of("https://www.googleapis.com/auth/cloud-platform"));
+//        PredictionServiceSettings predictionServiceSettings = PredictionServiceSettings.newBuilder()
+//                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+//                .setEndpoint(VertexAiEmbeddingConnectionDetails.DEFAULT_ENDPOINT)
+//                .build();
+//        return VertexAiEmbeddingConnectionDetails.builder()
+//                .withProjectId(connectionProperties.getProjectId())
+//                .withLocation(connectionProperties.getLocation())
+//                .withPredictionServiceSettings(predictionServiceSettings)
+//                .build();
+//    }
 }

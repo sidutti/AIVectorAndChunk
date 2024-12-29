@@ -12,15 +12,16 @@ import java.util.List;
 @Component
 public class SplitService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SplitService.class);
+    TokenTextSplitter tokenTextSplitter = TokenTextSplitter.builder()
+            .withChunkSize(600)
+            .withMaxNumChunks(1000000)
+            .withMinChunkLengthToEmbed(1)
+            .build();
 
     public List<Document> splitDocument(Root.Row row) {
         try {
             String finalValue = row.instruction().concat(row.output());
-            TokenTextSplitter tokenTextSplitter = TokenTextSplitter.builder()
-                    .withChunkSize(600)
-                    .withMinChunkLengthToEmbed(1)
-                    .build();
-            return tokenTextSplitter.split(Document.builder().withContent(finalValue).build());
+            return tokenTextSplitter.split(Document.builder().text(finalValue).build());
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -28,14 +29,11 @@ public class SplitService {
     }
 
     public List<Document> splitDocument(Document inputText) {
-        TokenTextSplitter tokenTextSplitter = TokenTextSplitter.builder()
-                .withChunkSize(600)
-                .withMinChunkLengthToEmbed(1)
-                .build();
+
+
         return tokenTextSplitter.split(inputText);
 
     }
-
 
 
 }

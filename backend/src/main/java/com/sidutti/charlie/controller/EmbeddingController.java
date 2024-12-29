@@ -74,10 +74,11 @@ public class EmbeddingController {
 
     @PostMapping("ai/embedding/search")
     public Flux<SearchResults> searchEmbedding(@RequestBody String query) {
-        SearchRequest searchRequest = SearchRequest.defaults()
-                .withSimilarityThreshold(SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL)
-                .withQuery(query)
-                .withTopK(15);
+        SearchRequest searchRequest = SearchRequest.builder()
+                .similarityThreshold(SearchRequest.SIMILARITY_THRESHOLD_ACCEPT_ALL)
+                .query(query)
+                .topK(15)
+                .build();
         long start = System.currentTimeMillis();
         return searchService.similaritySearch(searchRequest)
                 .doFinally(_ -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));

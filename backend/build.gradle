@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version "${springBootVersion}"
     id 'io.spring.dependency-management' version "${springDependencyVersion}"
     id 'org.graalvm.buildtools.native' version "${nativeVersion}"
+    id 'org.springframework.boot.aot' version "${springBootVersion}"
 }
 
 ext {
@@ -15,7 +16,6 @@ version = '24.8.0-SNAPSHOT'
 repositories {
     mavenCentral()
     maven { url 'https://repo.spring.io/milestone' }
-    maven { url 'https://repo.spring.io/snapshot' }
 }
 
 graalvmNative {
@@ -50,16 +50,16 @@ dependencies {
 
     implementation("com.google.cloud:google-cloud-document-ai:2.57.0")
 
-
-    // implementation("com.google.cloud:google-cloud-apikeys:0.51.0")
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    //implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter'
-    implementation 'org.springframework.ai:spring-ai-vertex-ai-embedding-spring-boot-starter'
+    //implementation 'org.springframework.ai:spring-ai-vertex-ai-embedding-spring-boot-starter'
+    implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation('org.springframework.ai:spring-ai-elasticsearch-store-spring-boot-starter')
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation('org.springframework.ai:spring-ai-tika-document-reader')
+
+
     //add logback dependency
 
     implementation('ch.qos.logback:logback-core')
@@ -72,7 +72,6 @@ dependencies {
 dependencyManagement {
     imports {
         mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
-        mavenBom "com.google.cloud:spring-cloud-gcp-dependencies:$springCloudGcpVersion"
     }
 }
 

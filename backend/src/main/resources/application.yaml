@@ -9,7 +9,7 @@ spring:
         index-name: vector_index
         path-name: embedding
       elasticsearch:
-        dimensions: 768
+        dimensions: 1024
         initialize-schema: true
         index-name: google-ai-index
     ollama:
@@ -26,6 +26,9 @@ spring:
           projectId: basicdocumentai
           location: us-central1
           credentialsUri: file:/mnt/nas/CodeDataset/keys/serviceaccount.json
+  aop:
+    proxy-target-class: false
+    auto: true
 
   data:
     mongodb:
@@ -47,3 +50,4 @@ cloud:
     project-id: basicdocumentai
     location: us
     processer-id: 5b561e1fd378c67a
+

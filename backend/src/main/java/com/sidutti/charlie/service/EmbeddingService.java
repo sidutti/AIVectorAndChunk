@@ -2,7 +2,10 @@ package com.sidutti.charlie.service;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.stereotype.Component;
+
+import java.util.Objects;
 
 @Component
 public class EmbeddingService {
@@ -17,9 +20,9 @@ public class EmbeddingService {
     }
 
 
-    public Document createEmbeddedDocument(Document doc) {
-        float[] embedding = createEmbedding(doc.getContent());
-        doc.setEmbedding(embedding);
-        return doc;
+    public ElasticsearchVectorStore.ElasticSearchDocument createEmbeddedDocument(Document document) {
+        float[] embedding = createEmbedding(document.getText());
+        return new ElasticsearchVectorStore.ElasticSearchDocument(document.getId(), Objects.requireNonNull(document.getText()),
+                document.getMetadata(), embedding);
     }
 }

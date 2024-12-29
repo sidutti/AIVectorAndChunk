@@ -3,6 +3,7 @@ package com.sidutti.charlie.service;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch._types.KnnSearch;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.ObjectBuilder;
 import com.sidutti.charlie.model.SearchResults;
@@ -10,10 +11,10 @@ import org.springframework.ai.autoconfigure.vectorstore.elasticsearch.Elasticsea
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.model.EmbeddingUtils;
-import org.springframework.ai.vectorstore.ElasticsearchAiSearchFilterExpressionConverter;
-import org.springframework.ai.vectorstore.ElasticsearchVectorStoreOptions;
 import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.SimilarityFunction;
+import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchAiSearchFilterExpressionConverter;
+import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStoreOptions;
+import org.springframework.ai.vectorstore.elasticsearch.SimilarityFunction;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static java.lang.Math.sqrt;
@@ -66,11 +68,9 @@ public class SearchService {
             threshold = 1 - threshold;
         }
         final float finalThreshold = threshold;
-        float[] vectors = this.embeddingModel.embed(searchRequest.getQuery());
-
-
-        return Mono.fromFuture(elasticsearchAsyncClient.search(
-                        buildQuery(searchRequest, vectors, finalThreshold), Document.class))
+        CompletableFuture<SearchResponse<Document>> searchResult = CompletableFuture.supplyAsync(() -> this.embeddingModel.embed(searchRequest.getQuery()))
+                .thenComposeAsync(r -> elasticsearchAsyncClient.search(buildQuery(searchRequest, r, finalThreshold), Document.class));
+        return Mono.fromFuture(searchResult)
                 .flatMapMany(response -> Flux.fromIterable(response.hits().hits()))
                 .map(this::toDocument);
 
@@ -114,7 +114,7 @@ public class SearchService {
         Document document = hit.source();
         assert document != null;
         document.getMetadata().put("distance", v);
-        return new SearchResults(document.getContent(), document.getFormattedContent(), document.getId(), v);
+        return new SearchResults(document.getText(), document.getFormattedContent(), document.getId(), v);
     }
 
     // more info on score/distance calculation
