@@ -122,7 +122,6 @@ public class EmbeddingController {
                         .map(splitService::splitDocument)
                         .flatMapIterable(list -> list)
                         .map(embeddingService::createEmbeddedDocument)
-
                         .map(vectorService::saveDocument)
                         .flatMap(mono -> mono)
                         .subscribe();

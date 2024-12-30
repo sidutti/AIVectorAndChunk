@@ -22,10 +22,12 @@ spring:
         embedding:
           text:
             enabled: true
+
         gemini:
           projectId: basicdocumentai
           location: us-central1
           credentialsUri: file:/mnt/nas/CodeDataset/keys/serviceaccount.json
+
   aop:
     proxy-target-class: false
     auto: true

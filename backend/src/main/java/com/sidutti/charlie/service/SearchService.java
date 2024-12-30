@@ -114,7 +114,11 @@ public class SearchService {
         Document document = hit.source();
         assert document != null;
         document.getMetadata().put("distance", v);
-        return new SearchResults(document.getText(), document.getFormattedContent(), document.getId(), v);
+        return new SearchResults(document.getText(),
+                document.getFormattedContent(),
+                (String) document.getMetadata().get("name"),
+                (String) document.getMetadata().get("file"),
+                document.getId(), v);
     }
 
     // more info on score/distance calculation

@@ -4,8 +4,10 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class EmbeddingService {
@@ -15,14 +17,13 @@ public class EmbeddingService {
         this.embeddingModel = embeddingModel;
     }
 
-    public float[] createEmbedding(String text) {
-        return embeddingModel.embed(text);
+    public Mono<float[]> createEmbedding(String text) {
+        return Mono.fromFuture(CompletableFuture.supplyAsync(() -> embeddingModel.embed(text)));
     }
 
-
-    public ElasticsearchVectorStore.ElasticSearchDocument createEmbeddedDocument(Document document) {
-        float[] embedding = createEmbedding(document.getText());
-        return new ElasticsearchVectorStore.ElasticSearchDocument(document.getId(), Objects.requireNonNull(document.getText()),
-                document.getMetadata(), embedding);
+    public Mono<ElasticsearchVectorStore.ElasticSearchDocument> createEmbeddedDocument(Document document) {
+        return createEmbedding(document.getText())
+                .map(embed -> new ElasticsearchVectorStore.ElasticSearchDocument(document.getId(), Objects.requireNonNull(document.getText()),
+                        document.getMetadata(), embed));
     }
 }

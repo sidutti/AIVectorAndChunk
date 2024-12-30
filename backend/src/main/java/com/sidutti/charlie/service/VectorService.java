@@ -28,13 +28,15 @@ public class VectorService {
                         .index("google-ai-index")
                 ));
     }
-
-    public Mono<BulkResponse> saveDocument(List<Document> documents) {
-        BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
-        for (Document document : documents) {
-            bulkRequestBuilder.operations(op -> op
-                    .index(idx -> idx.index(indexName).id(document.getId()).document(document)));
-        }
-        return Mono.fromFuture(client.bulk(bulkRequestBuilder.build()));
+    public Mono<IndexResponse> saveDocument(Mono<ElasticsearchVectorStore.ElasticSearchDocument> input) {
+        return input.flatMap(document ->
+                Mono.fromFuture(
+                client.index(index -> index
+                        .id(document.id())
+                        .document(document)
+                        .index("google-ai-index")
+                )));
     }
+
+
 }
