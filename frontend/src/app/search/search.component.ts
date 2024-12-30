@@ -43,8 +43,6 @@ import {NgIf} from "@angular/common";
             MatRow,
             MatRowDef,
             MatHeaderRowDef,
-            MatProgressSpinner,
-            NgIf,
             MatSuffix
       ],
       providers: [SearchService],
@@ -55,7 +53,7 @@ export class SearchComponent {
       data: Response[] = [];
       stringValue: string = '';
       value: string = '';
-      displayedColumns: string[] = ['Search-Accuracy', 'Response'];
+      displayedColumns: string[] = ['Search-Accuracy','Source', 'Response'];
 
       columnsToDisplayWithExpand = [...this.displayedColumns, 'expand'];
       expandedElement: Response | null | undefined;

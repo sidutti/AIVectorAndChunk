@@ -13,6 +13,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.model.EmbeddingUtils;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchAiSearchFilterExpressionConverter;
+import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStoreOptions;
 import org.springframework.ai.vectorstore.elasticsearch.SimilarityFunction;
 import org.springframework.ai.vectorstore.filter.Filter;
@@ -68,8 +69,8 @@ public class SearchService {
             threshold = 1 - threshold;
         }
         final float finalThreshold = threshold;
-        CompletableFuture<SearchResponse<Document>> searchResult = CompletableFuture.supplyAsync(() -> this.embeddingModel.embed(searchRequest.getQuery()))
-                .thenComposeAsync(r -> elasticsearchAsyncClient.search(buildQuery(searchRequest, r, finalThreshold), Document.class));
+        CompletableFuture<SearchResponse<ElasticsearchVectorStore.ElasticSearchDocument>> searchResult = CompletableFuture.supplyAsync(() -> this.embeddingModel.embed(searchRequest.getQuery()))
+                .thenComposeAsync(r -> elasticsearchAsyncClient.search(buildQuery(searchRequest, r, finalThreshold), ElasticsearchVectorStore.ElasticSearchDocument.class));
         return Mono.fromFuture(searchResult)
                 .flatMapMany(response -> Flux.fromIterable(response.hits().hits()))
                 .map(this::toDocument);
@@ -108,17 +109,17 @@ public class SearchService {
 
     }
 
-    private SearchResults toDocument(Hit<Document> hit) {
+    private SearchResults toDocument(Hit<ElasticsearchVectorStore.ElasticSearchDocument> hit) {
         assert hit.score() != null;
         float v = calculateDistance(hit.score().floatValue());
-        Document document = hit.source();
-        assert document != null;
-        document.getMetadata().put("distance", v);
-        return new SearchResults(document.getText(),
-                document.getFormattedContent(),
-                (String) document.getMetadata().get("name"),
-                (String) document.getMetadata().get("file"),
-                document.getId(), v);
+        ElasticsearchVectorStore.ElasticSearchDocument document = hit.source();
+
+
+        return new SearchResults(document.content(),
+                document.content(),
+                (String) document.metadata().get("name"),
+                (String) document.metadata().get("file"),
+                document.id(), v);
     }
 
     // more info on score/distance calculation
