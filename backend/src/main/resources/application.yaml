@@ -13,8 +13,8 @@ spring:
         initialize-schema: true
         index-name: google-ai-index
     ollama:
-      chat:
-        model: gemma2
+#      chat:
+#        model: gemma2
       embedding:
           model: mxbai-embed-large
     vertex:
@@ -22,7 +22,6 @@ spring:
         embedding:
           text:
             enabled: true
-
         gemini:
           projectId: basicdocumentai
           location: us-central1
@@ -51,5 +50,6 @@ cloud:
     cred-path: '/mnt/nas/CodeDataset/keys/serviceaccount.json'
     project-id: basicdocumentai
     location: us
-    processer-id: 5b561e1fd378c67a
+    layout-processer-id: 5b561e1fd378c67a
+    bucket: doaibucket
 

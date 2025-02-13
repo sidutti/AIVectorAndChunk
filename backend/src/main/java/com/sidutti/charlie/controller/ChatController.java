@@ -1,8 +1,10 @@
 package com.sidutti.charlie.controller;
 
+import com.sidutti.charlie.cloud.google.BatchDocumentService;
 import com.sidutti.charlie.cloud.google.DocumentService;
 import com.sidutti.charlie.model.ChatData;
 import com.sidutti.charlie.model.ExtractedDocument;
+import com.sidutti.charlie.tool.TransformerUtil;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -27,6 +29,7 @@ import reactor.util.retry.RetryBackoffSpec;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
@@ -37,11 +40,18 @@ public class ChatController {
     private final ChatModel chatModel;
     private final DocumentService service;
     private final WebClient client;
+    private final TransformerUtil util;
+    private final BatchDocumentService batchDocumentService;
 
-    public ChatController(VertexAiGeminiChatModel chatModel, DocumentService service, WebClient client) {
+    public ChatController(VertexAiGeminiChatModel chatModel,
+                          DocumentService service,
+                          WebClient client,
+                          TransformerUtil util, BatchDocumentService batchDocumentService) {
         this.chatModel = chatModel;
         this.service = service;
         this.client = client;
+        this.util = util;
+        this.batchDocumentService = batchDocumentService;
     }
 
     @Bean
@@ -49,47 +59,64 @@ public class ChatController {
         return route(POST("ai/chat"), this::chat)
                 .andRoute(POST("ai/summarize"), this::summarize)
                 .andRoute(POST("/ai/extract"), this::extract)
+                .andRoute(POST("/ai/extract/batch"), this::batchExtract)
                 .andRoute(POST("/ai/rag/generate"), this::rag)
                 .andRoute(POST("/ai/extract/irs"), this::extractIrs);
     }
 
+
+
     public Mono<ServerResponse> chat(ServerRequest request) {
         Flux<ChatData> result = request.bodyToMono(String.class)
-                .map(chatModel::stream)
-                .flatMapMany(t -> t)
+                .flatMapMany(chatModel::stream)
                 .map(ChatData::new);
         return ServerResponse.ok().body(result, ChatData.class);
     }
 
     public Mono<ServerResponse> summarize(ServerRequest request) {
+        var mime = request.queryParam("mime").orElse("application/pdf");
         Flux<ChatData> result = request.body(BodyExtractors.toDataBuffers())
                 .reduce(InputStream.nullInputStream(), (s, d)
                         -> new SequenceInputStream(s, d.asInputStream(true)))
                 .map(InputStreamResource::new)
                 .map(is -> new UserMessage("Based on the provided document tell me what it is and your confidence level",
-                        List.of(new Media(MimeType.valueOf("application/pdf"), is))))
-                .map(chatModel::stream)
-                .flatMapMany(t -> t)
+                        List.of(new Media(MimeType.valueOf(mime), is))))
+                .flatMapMany(chatModel::stream)
                 .map(ChatData::new);
 
         return ServerResponse.ok().body(result, ChatData.class);
     }
-
-    public Mono<ServerResponse> extract(ServerRequest request) {
-        Mono<ExtractedDocument> result = request.body(BodyExtractors.toDataBuffers())
+    private Mono<ServerResponse> batchExtract(ServerRequest request) {
+        var mime = request.queryParam("mime").orElse("application/pdf");
+        var fileName = request.queryParam("fileName").orElse("file");
+        var parser = request.queryParam("parser").orElse("layout");
+        var uuid= UUID.randomUUID().toString();
+        Flux<ExtractedDocument> result = request.body(BodyExtractors.toDataBuffers())
                 .reduce(InputStream.nullInputStream(), (s, d)
                         -> new SequenceInputStream(s, d.asInputStream(true)))
-                .map(service::processDocument);
+                .map(is -> batchDocumentService.uploadFileToGCS(is, fileName))
+                .flatMap(file -> batchDocumentService.processFile(mime, file, parser, uuid))
+                .map(res -> batchDocumentService.processOutput(uuid, fileName))
+                .flatMapMany(Flux::fromIterable)
+                .map(util::transform);
+        return ServerResponse.ok().body(result, ExtractedDocument.class);
+    }
+    public Mono<ServerResponse> extract(ServerRequest request) {
+        var mime = request.queryParam("mime").orElse("application/pdf");
+        var result = request.body(BodyExtractors.toDataBuffers())
+                .reduce(InputStream.nullInputStream(), (s, d)
+                        -> new SequenceInputStream(s, d.asInputStream(true)))
+                .map(is -> service.processDocument(is, mime))
+                .map(util::transform);
 
-        return ServerResponse.ok().body(result, ChatData.class);
+        return ServerResponse.ok().body(result, ExtractedDocument.class);
     }
 
     public Mono<ServerResponse> rag(ServerRequest request) {
         Flux<ChatData> result = request.bodyToMono(String.class)
                 .map(s -> s.split("###"))
                 .map(this::getPrompt)
-                .map(chatModel::stream)
-                .flatMapMany(t -> t)
+                .flatMapMany(chatModel::stream)
                 .map(ChatResponse::getResults)
                 .flatMapIterable(l -> l)
                 .map(g -> new ChatData(g.getOutput().getContent()));
@@ -98,9 +125,12 @@ public class ChatController {
     }
 
     public Mono<ServerResponse> extractIrs(ServerRequest request) {
-        Mono<ExtractedDocument> result = request.bodyToMono(String.class)
+        var mime = request.queryParam("mime").orElse("application/pdf");
+        var result = request.bodyToMono(String.class)
                 .flatMap(this::extractDocFromIRS)
-                .map(service::processDocument);
+                .map(is -> service.processDocument(is, mime))
+                .map(util::transform);
+
         return ServerResponse.ok().body(result, ExtractedDocument.class);
 
     }
