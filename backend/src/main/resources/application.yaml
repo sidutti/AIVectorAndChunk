@@ -1,6 +1,11 @@
 spring:
   application:
     name: sidutti
+  neo4j:
+    uri: neo4j+s://c78a4b99.databases.neo4j.io
+    authentication:
+      username: sharish.sankaran@gmail.com
+      password: HawvpEX5UpWi3tehpQjxn0ANSb3yygDGtTf3Ldes1mY
   ai:
     vectorstore:
       mongodb:
@@ -12,6 +17,11 @@ spring:
         dimensions: 1024
         initialize-schema: true
         index-name: google-ai-index
+      neo4j:
+        database-name: neo4j
+        initialize-schema: true
+        embedding-dimension: 1024
+
     ollama:
 #      chat:
 #        model: gemma2
@@ -26,7 +36,6 @@ spring:
           projectId: basicdocumentai
           location: us-central1
           credentialsUri: file:/mnt/nas/CodeDataset/keys/serviceaccount.json
-
   aop:
     proxy-target-class: false
     auto: true
