@@ -55,6 +55,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
+    implementation 'org.springframework.ai:spring-ai-azure-openai-spring-boot-starter'
     //implementation 'org.springframework.ai:spring-ai-vertex-ai-embedding-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-neo4j-store-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
@@ -66,7 +67,7 @@ dependencies {
     implementation("com.google.cloud:google-cloud-storage")
     implementation 'org.apache.lucene:lucene-analyzers-common:8.11.4'
     implementation 'org.apache.lucene:lucene-analysis-common:10.1.0'
-
+    implementation ("com.azure:azure-ai-documentintelligence:1.0.0")
     implementation 'org.apache.lucene:lucene-queryparser:10.1.0'
     implementation 'org.apache.commons:commons-text:1.12.0'
     implementation 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
@@ -74,6 +75,8 @@ dependencies {
     //add logback dependency
 
     implementation('ch.qos.logback:logback-core')
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'

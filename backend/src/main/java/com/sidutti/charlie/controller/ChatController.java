@@ -4,27 +4,26 @@ import com.sidutti.charlie.cloud.google.BatchDocumentService;
 import com.sidutti.charlie.cloud.google.DocumentService;
 import com.sidutti.charlie.model.ChatData;
 import com.sidutti.charlie.model.ExtractedDocument;
+import com.sidutti.charlie.service.GenerationService;
 import com.sidutti.charlie.tool.TransformerUtil;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.Media;
-import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.util.MimeType;
 import org.springframework.web.reactive.function.BodyExtractors;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.RetryBackoffSpec;
 
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -39,32 +38,51 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 public class ChatController {
     private final ChatModel chatModel;
     private final DocumentService service;
-    private final WebClient client;
+
     private final TransformerUtil util;
     private final BatchDocumentService batchDocumentService;
+    private final GenerationService generationService;
 
-    public ChatController(VertexAiGeminiChatModel chatModel,
+    public ChatController(@Qualifier("azureOpenAiChatModel") ChatModel chatModel,
                           DocumentService service,
-                          WebClient client,
-                          TransformerUtil util, BatchDocumentService batchDocumentService) {
+                          TransformerUtil util,
+                          BatchDocumentService batchDocumentService,
+                          GenerationService generationService) {
         this.chatModel = chatModel;
         this.service = service;
-        this.client = client;
         this.util = util;
         this.batchDocumentService = batchDocumentService;
+        this.generationService = generationService;
     }
 
     @Bean
     public RouterFunction<ServerResponse> chattingRoutes() {
         return route(POST("ai/chat"), this::chat)
+                .andRoute(POST("ai/plainchat"), this::plainChat)
+                .andRoute(POST("ai/generatePolicy"), this::generatePolicy)
+                .andRoute(POST("ai/processRecords"), this::processRecords)
+
                 .andRoute(POST("ai/summarize"), this::summarize)
                 .andRoute(POST("/ai/extract"), this::extract)
                 .andRoute(POST("/ai/extract/batch"), this::batchExtract)
-                .andRoute(POST("/ai/rag/generate"), this::rag)
-                .andRoute(POST("/ai/extract/irs"), this::extractIrs);
+                .andRoute(POST("/ai/rag/generate"), this::rag);
     }
 
+    private Mono<ServerResponse> generatePolicy(ServerRequest request) {
+        generationService.processFiles();
+        return ServerResponse.ok().bodyValue("Success");
+    }
+    private Mono<ServerResponse> processRecords(ServerRequest request) {
+        generationService.processRecords();
+        return ServerResponse.ok().bodyValue("Success");
+    }
 
+    public Mono<ServerResponse> plainChat(ServerRequest request) {
+        Flux<String> result = request.bodyToMono(String.class)
+                .flatMapMany(chatModel::stream);
+
+        return ServerResponse.ok().body(result, String.class);
+    }
 
     public Mono<ServerResponse> chat(ServerRequest request) {
         Flux<ChatData> result = request.bodyToMono(String.class)
@@ -86,11 +104,12 @@ public class ChatController {
 
         return ServerResponse.ok().body(result, ChatData.class);
     }
+
     private Mono<ServerResponse> batchExtract(ServerRequest request) {
         var mime = request.queryParam("mime").orElse("application/pdf");
         var fileName = request.queryParam("fileName").orElse("file");
         var parser = request.queryParam("parser").orElse("layout");
-        var uuid= UUID.randomUUID().toString();
+        var uuid = UUID.randomUUID().toString();
         Flux<ExtractedDocument> result = request.body(BodyExtractors.toDataBuffers())
                 .reduce(InputStream.nullInputStream(), (s, d)
                         -> new SequenceInputStream(s, d.asInputStream(true)))
@@ -101,6 +120,7 @@ public class ChatController {
                 .map(util::transform);
         return ServerResponse.ok().body(result, ExtractedDocument.class);
     }
+
     public Mono<ServerResponse> extract(ServerRequest request) {
         var mime = request.queryParam("mime").orElse("application/pdf");
         var result = request.body(BodyExtractors.toDataBuffers())
@@ -113,38 +133,15 @@ public class ChatController {
     }
 
     public Mono<ServerResponse> rag(ServerRequest request) {
-        Flux<ChatData> result = request.bodyToMono(String.class)
+        Flux<Generation> result = request.bodyToMono(String.class)
                 .map(s -> s.split("###"))
                 .map(this::getPrompt)
                 .flatMapMany(chatModel::stream)
-                .map(ChatResponse::getResults)
-                .flatMapIterable(l -> l)
-                .map(g -> new ChatData(g.getOutput().getContent()));
+                .flatMapIterable(ChatResponse::getResults);
 
-        return ServerResponse.ok().body(result, ChatData.class);
+        return ServerResponse.ok().body(result, Generation.class);
     }
 
-    public Mono<ServerResponse> extractIrs(ServerRequest request) {
-        var mime = request.queryParam("mime").orElse("application/pdf");
-        var result = request.bodyToMono(String.class)
-                .flatMap(this::extractDocFromIRS)
-                .map(is -> service.processDocument(is, mime))
-                .map(util::transform);
-
-        return ServerResponse.ok().body(result, ExtractedDocument.class);
-
-    }
-
-    private Mono<InputStream> extractDocFromIRS(String url) {
-        return client
-                .get()
-                .uri(url)
-                .retrieve()
-                .bodyToFlux(DataBuffer.class)
-                .retryWhen(RetryBackoffSpec.backoff(3, java.time.Duration.ofSeconds(10)))
-                .reduce(InputStream.nullInputStream(), (s, d)
-                        -> new SequenceInputStream(s, d.asInputStream(true)));
-    }
 
     private Prompt getPrompt(String[] inputs) {
         String PROMPT_BLUEPRINT = """

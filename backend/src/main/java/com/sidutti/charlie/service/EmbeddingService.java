@@ -3,6 +3,7 @@ package com.sidutti.charlie.service;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -13,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 public class EmbeddingService {
     private final EmbeddingModel embeddingModel;
 
-    public EmbeddingService(EmbeddingModel embeddingModel) {
+    public EmbeddingService(@Qualifier("azureOpenAiEmbeddingModel") EmbeddingModel embeddingModel) {
         this.embeddingModel = embeddingModel;
     }
 

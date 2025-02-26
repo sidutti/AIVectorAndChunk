@@ -8,7 +8,6 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.util.ObjectBuilder;
 import com.sidutti.charlie.model.SearchResults;
 import org.springframework.ai.autoconfigure.vectorstore.elasticsearch.ElasticsearchVectorStoreProperties;
-import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.model.EmbeddingUtils;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -18,6 +17,7 @@ import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore
 import org.springframework.ai.vectorstore.elasticsearch.SimilarityFunction;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionConverter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -31,16 +31,16 @@ import java.util.function.Function;
 import static java.lang.Math.sqrt;
 
 @Component
-public class SearchService {
+public class ElasticSearchService {
     private final EmbeddingModel embeddingModel;
     private final ElasticsearchVectorStoreOptions options = new ElasticsearchVectorStoreOptions();
     private final FilterExpressionConverter filterExpressionConverter;
     private final ElasticsearchAsyncClient elasticsearchAsyncClient;
 
 
-    public SearchService(EmbeddingModel embeddingModel,
-                         ElasticsearchAsyncClient elasticsearchAsyncClient,
-                         ElasticsearchVectorStoreProperties properties) {
+    public ElasticSearchService(@Qualifier("azureOpenAiEmbeddingModel") EmbeddingModel embeddingModel,
+                                ElasticsearchAsyncClient elasticsearchAsyncClient,
+                                ElasticsearchVectorStoreProperties properties) {
         this.embeddingModel = embeddingModel;
         this.elasticsearchAsyncClient = elasticsearchAsyncClient;
         filterExpressionConverter = new ElasticsearchAiSearchFilterExpressionConverter();

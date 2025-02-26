@@ -4,8 +4,8 @@ spring:
   neo4j:
     uri: neo4j+s://c78a4b99.databases.neo4j.io
     authentication:
-      username: sharish.sankaran@gmail.com
-      password: HawvpEX5UpWi3tehpQjxn0ANSb3yygDGtTf3Ldes1mY
+      username: neo4j
+      password: ${NEO4J_PASSWORD:none}
   ai:
     vectorstore:
       mongodb:
@@ -20,22 +20,34 @@ spring:
       neo4j:
         database-name: neo4j
         initialize-schema: true
-        embedding-dimension: 1024
-
+        embedding-dimension: 1536
     ollama:
-#      chat:
-#        model: gemma2
+      chat:
+        model: gemma2
       embedding:
-          model: mxbai-embed-large
+        model: mxbai-embed-large
+        enabled: false
     vertex:
       ai:
         embedding:
           text:
-            enabled: true
+            enabled: false
         gemini:
           projectId: basicdocumentai
           location: us-central1
           credentialsUri: file:/mnt/nas/CodeDataset/keys/serviceaccount.json
+    azure:
+      openai:
+        embedding:
+          enabled: true
+          options:
+            deployment-name: basic-embeddings
+        api-key: ${AZURE_OPENAI_KEY}
+        endpoint: https://basicai.openai.azure.com/
+        chat:
+          enabled: true
+          options:
+            deployment-name: Basic-Mini
   aop:
     proxy-target-class: false
     auto: true
@@ -55,6 +67,10 @@ spring:
     virtual:
       enabled: true
 cloud:
+  microsoft:
+    endpoint: https://basicdocintel.cognitiveservices.azure.com/
+    key: ${AZURE_KEY:none}
+
   google:
     cred-path: '/mnt/nas/CodeDataset/keys/serviceaccount.json'
     project-id: basicdocumentai

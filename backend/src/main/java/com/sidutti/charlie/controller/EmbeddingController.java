@@ -32,7 +32,7 @@ public class EmbeddingController {
     private final Logger LOGGER = LoggerFactory.getLogger(EmbeddingController.class);
 
 
-    private final SearchService searchService;
+    private final ElasticSearchService elasticSearchService;
     private final HuggingFaceService huggingFaceService;
     private final PdfService pdfService;
     private final SplitService splitService;
@@ -43,10 +43,13 @@ public class EmbeddingController {
     @Autowired
     public EmbeddingController(
 
-            SearchService searchService,
+            ElasticSearchService elasticSearchService,
             HuggingFaceService huggingFaceService,
-            PdfService pdfService, SplitService splitService, EmbeddingService embeddingService, VectorService vectorService, WebClient client) {
-        this.searchService = searchService;
+            PdfService pdfService, SplitService splitService,
+            EmbeddingService embeddingService,
+            VectorService vectorService,
+            WebClient client) {
+        this.elasticSearchService = elasticSearchService;
         this.huggingFaceService = huggingFaceService;
         this.pdfService = pdfService;
         this.splitService = splitService;
@@ -80,7 +83,7 @@ public class EmbeddingController {
                 .topK(15)
                 .build();
         long start = System.currentTimeMillis();
-        return searchService.similaritySearch(searchRequest)
+        return elasticSearchService.similaritySearch(searchRequest)
                 .doFinally(_ -> System.out.println("Finance Embedding finished : " + (System.currentTimeMillis() - start) + "ms"));
     }
 
