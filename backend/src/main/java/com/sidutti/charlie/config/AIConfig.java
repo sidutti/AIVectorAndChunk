@@ -46,14 +46,7 @@ public class AIConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AIConfig.class);
 
-    @Bean
-    public DocumentIntelligenceAsyncClient createClient(@Value("${cloud.microsoft.endpoint}") String endpoint,
-                                                        @Value("${cloud.microsoft.key}") String key) {
-        return new DocumentIntelligenceClientBuilder()
-                .endpoint(endpoint)
-                .credential(new KeyCredential(key))
-                .buildAsyncClient();
-    }
+
 
     @Bean
     public WebClient webClient() {

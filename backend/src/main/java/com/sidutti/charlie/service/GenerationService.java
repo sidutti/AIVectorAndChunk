@@ -153,6 +153,7 @@ public class GenerationService {
                 Document doc = Document.builder()
                         .id(nodeKey)
                         .text(nodeValue.toString())
+                        .metadata(Map.of("name", policyData.name()))
                         .build();
                 store.add(Collections.singletonList(doc));
             }
