@@ -5,6 +5,7 @@ import com.sidutti.charlie.cloud.google.DocumentService;
 import com.sidutti.charlie.model.ChatData;
 import com.sidutti.charlie.model.ExtractedDocument;
 import com.sidutti.charlie.service.GenerationService;
+import com.sidutti.charlie.service.GraphService;
 import com.sidutti.charlie.tool.TransformerUtil;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.util.MimeType;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -30,6 +32,7 @@ import java.io.SequenceInputStream;
 import java.util.List;
 import java.util.UUID;
 
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
@@ -42,17 +45,19 @@ public class ChatController {
     private final TransformerUtil util;
     private final BatchDocumentService batchDocumentService;
     private final GenerationService generationService;
+    private final GraphService graphService;
 
     public ChatController(@Qualifier("azureOpenAiChatModel") ChatModel chatModel,
                           DocumentService service,
                           TransformerUtil util,
                           BatchDocumentService batchDocumentService,
-                          GenerationService generationService) {
+                          GenerationService generationService, GraphService graphService) {
         this.chatModel = chatModel;
         this.service = service;
         this.util = util;
         this.batchDocumentService = batchDocumentService;
         this.generationService = generationService;
+        this.graphService = graphService;
     }
 
     @Bean
@@ -60,8 +65,7 @@ public class ChatController {
         return route(POST("ai/chat"), this::chat)
                 .andRoute(POST("ai/plainchat"), this::plainChat)
                 .andRoute(POST("ai/generatePolicy"), this::generatePolicy)
-                .andRoute(POST("ai/processRecords"), this::processRecords)
-
+                .andRoute(GET("ai/processRecords"), this::processRecords)
                 .andRoute(POST("ai/summarize"), this::summarize)
                 .andRoute(POST("/ai/extract"), this::extract)
                 .andRoute(POST("/ai/extract/batch"), this::batchExtract)
@@ -72,9 +76,10 @@ public class ChatController {
         generationService.processFiles();
         return ServerResponse.ok().bodyValue("Success");
     }
+
     private Mono<ServerResponse> processRecords(ServerRequest request) {
-        generationService.processRecords();
-        return ServerResponse.ok().bodyValue("Success");
+        var result = graphService.processRecords();
+        return ServerResponse.ok().body(result, Document.class);
     }
 
     public Mono<ServerResponse> plainChat(ServerRequest request) {

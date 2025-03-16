@@ -29,6 +29,18 @@ public class HuggingFaceService {
         this.vectorService = vectorService;
     }
 
+    private static URI createUri(int pageNumber, int numberOfRows, String dataset, UriBuilder uriBuilder) {
+        return uriBuilder.host("datasets-server.huggingface.co")
+                .scheme("https")
+                .path("rows")
+                .queryParam("dataset", dataset)
+                .queryParam("config", "default")
+                .queryParam("split", "train")
+                .queryParam("offset", pageNumber)
+                .queryParam("length", numberOfRows)
+                .build();
+    }
+
     public Flux<IndexResponse> createEmbeddingsFromHuggingFace(int pageNumber, int numberOfRows, String dataset) {
         return webClient
                 .get()
@@ -50,18 +62,6 @@ public class HuggingFaceService {
                     System.out.println("Error creating document: " + e.getMessage());
                     return Mono.empty();
                 });
-    }
-
-    private static URI createUri(int pageNumber, int numberOfRows, String dataset, UriBuilder uriBuilder) {
-        return uriBuilder.host("datasets-server.huggingface.co")
-                .scheme("https")
-                .path("rows")
-                .queryParam("dataset", dataset)
-                .queryParam("config", "default")
-                .queryParam("split", "train")
-                .queryParam("offset", pageNumber)
-                .queryParam("length", numberOfRows)
-                .build();
     }
 
 }

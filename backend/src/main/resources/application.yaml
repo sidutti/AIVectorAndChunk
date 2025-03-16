@@ -1,11 +1,12 @@
 spring:
   application:
     name: sidutti
+
   neo4j:
     uri: neo4j+s://c78a4b99.databases.neo4j.io
     authentication:
       username: neo4j
-      password: ${NEO4J_PASSWORD:none}
+      password: ${NEO4J_PASSWORD:NONE}
   ai:
     vectorstore:
       mongodb:
@@ -14,13 +15,9 @@ spring:
         index-name: vector_index
         path-name: embedding
       elasticsearch:
-        dimensions: 1024
+        dimensions: 1536
         initialize-schema: true
-        index-name: google-ai-index
-      neo4j:
-        database-name: neo4j
-        initialize-schema: true
-        embedding-dimension: 1536
+        index-name: policy-ai-index
     ollama:
       chat:
         model: gemma2
@@ -57,6 +54,10 @@ spring:
       uri: mongodb+srv://sidutti:1JtigZAmA4WeNOuM@sidchar.anzbaom.mongodb.net/?retryWrites=true&w=majority&appName=sidchar
       database: sample_training
       auto-index-creation: true
+    neo4j:
+      repositories:
+        type: reactive
+      database: neo4j
   elasticsearch:
     password: ElasticAdminPassword
     uris: http://192.168.1.84:30003/
@@ -78,3 +79,6 @@ cloud:
     layout-processer-id: 5b561e1fd378c67a
     bucket: doaibucket
 
+logging:
+  level:
+    ROOT: DEBUG

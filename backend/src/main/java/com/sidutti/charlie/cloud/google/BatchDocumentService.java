@@ -107,8 +107,8 @@ public class BatchDocumentService {
                 } catch (IOException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
-                storage.delete(BlobId.of(bucketName,  blob.getName()));
-                storage.delete(fileName+uuid);
+                storage.delete(BlobId.of(bucketName, blob.getName()));
+                storage.delete(fileName + uuid);
             }
         });
         return documents;

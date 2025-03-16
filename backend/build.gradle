@@ -4,11 +4,9 @@ plugins {
     id 'io.spring.dependency-management' version "${springDependencyVersion}"
     id 'org.graalvm.buildtools.native' version "${nativeVersion}"
     id 'org.springframework.boot.aot' version "${springBootVersion}"
+    id 'com.github.ben-manes.versions' version("${depVersion}")
 }
 
-ext {
-    springCloudGcpVersion = "5.7.0"
-}
 
 group = 'com.sidutti.charlie'
 version = '24.8.0-SNAPSHOT'
@@ -53,11 +51,12 @@ dependencies {
 
     implementation(platform("com.google.cloud:libraries-bom:${googleBom}"))
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
     implementation 'org.springframework.ai:spring-ai-vertex-ai-gemini-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
     implementation 'org.springframework.ai:spring-ai-azure-openai-spring-boot-starter'
     //implementation 'org.springframework.ai:spring-ai-vertex-ai-embedding-spring-boot-starter'
-    implementation 'org.springframework.ai:spring-ai-neo4j-store-spring-boot-starter'
     implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation('org.springframework.ai:spring-ai-elasticsearch-store-spring-boot-starter')
@@ -67,7 +66,7 @@ dependencies {
     implementation("com.google.cloud:google-cloud-storage")
     implementation 'org.apache.lucene:lucene-analyzers-common:8.11.4'
     implementation 'org.apache.lucene:lucene-analysis-common:10.1.0'
-    implementation ("com.azure:azure-ai-documentintelligence:1.0.0")
+    implementation("com.azure:azure-ai-documentintelligence:1.0.0")
     implementation 'org.apache.lucene:lucene-queryparser:10.1.0'
     implementation 'org.apache.commons:commons-text:1.12.0'
     implementation 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
@@ -75,7 +74,6 @@ dependencies {
     //add logback dependency
 
     implementation('ch.qos.logback:logback-core')
-    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

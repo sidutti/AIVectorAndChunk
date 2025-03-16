@@ -12,7 +12,7 @@ public class AzureCloudConfig {
 
     @Bean
     public DocumentIntelligenceAsyncClient azureDocumentClient(@Value("${cloud.microsoft.endpoint}") String endpoint,
-                                                        @Value("${cloud.microsoft.key}") String key) {
+                                                               @Value("${cloud.microsoft.key}") String key) {
         return new DocumentIntelligenceClientBuilder()
                 .endpoint(endpoint)
                 .credential(new KeyCredential(key))

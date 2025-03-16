@@ -1,6 +1,11 @@
 package com.sidutti.charlie.model.wiki;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,15 +19,15 @@ import java.util.Map;
 
 public class Originalimage {
 
+    @JsonIgnore
+
+    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
     @JsonProperty("source")
     private String source;
     @JsonProperty("width")
     private int width;
     @JsonProperty("height")
     private int height;
-    @JsonIgnore
-
-    private final Map<String, Object> additionalProperties = new LinkedHashMap<>();
 
     @JsonProperty("source")
     public String getSource() {
