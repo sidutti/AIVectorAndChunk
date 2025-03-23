@@ -132,7 +132,7 @@ public class AIConfig {
                 .build();
     }
 
-    @Bean("reactiveNeo4jTransactionManager")
+    @Bean("reactiveTransactionManager")
     public ReactiveNeo4jTransactionManager reactiveNeo4jTransactionManager(Driver driver,
                                                                            ReactiveDatabaseSelectionProvider databaseNameProvider) {
         return new ReactiveNeo4jTransactionManager(driver, databaseNameProvider);

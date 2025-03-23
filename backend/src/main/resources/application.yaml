@@ -4,6 +4,9 @@ spring:
 
   neo4j:
     uri: neo4j+s://c78a4b99.databases.neo4j.io
+    pool:
+      max-connection-pool-size: 1000
+
     authentication:
       username: neo4j
       password: ${NEO4J_PASSWORD:NONE}
@@ -58,6 +61,8 @@ spring:
       repositories:
         type: reactive
       database: neo4j
+
+
   elasticsearch:
     password: ElasticAdminPassword
     uris: http://192.168.1.84:30003/
@@ -79,6 +84,3 @@ cloud:
     layout-processer-id: 5b561e1fd378c67a
     bucket: doaibucket
 
-logging:
-  level:
-    ROOT: DEBUG

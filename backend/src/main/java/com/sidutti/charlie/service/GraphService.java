@@ -144,9 +144,35 @@ public class GraphService {
     public Flux<String> extractEntities(String prompt) {
 
         String userText = """
-                You are a Knowledge Graph expert, extract the following entities from the text.
-                Entities: Employees, supervisors, managers,clients, Customers, data processors, third-party vendors ,System administrators, network users, external access providers
-                Text: %s
+                Analyze the following contract document and extract the entities in the following structured format. If the information is not explicitly stated in the document, indicate "Not Specified" or "N/A".
+                
+                     **Contract Entities:**
+                
+                     *   **Contract Name/Title:**
+                     *   **Parties:**
+                         *   **Party 1 Name:**
+                         *   **Party 1 Address:**
+                         *   **Party 1 Role:** (e.g., Seller, Buyer, Landlord, Tenant)
+                         *   **Party 2 Name:**
+                         *   **Party 2 Address:**
+                         *   **Party 2 Role:**
+                         *   **(Repeat for any additional parties)**
+                     *   **Effective Date:** (YYYY-MM-DD)
+                     *   **Term:**
+                         *   **Start Date:** (YYYY-MM-DD)
+                         *   **End Date:** (YYYY-MM-DD)
+                         *   **Renewal Terms:** (Describe any automatic renewal clauses)
+                     *   **Payment:**
+                         *   **Currency:** (e.g., USD, EUR)
+                         *   **Total Amount:**
+                         *   **Payment Schedule:** (e.g., Monthly, Quarterly, Upon Completion)
+                         *   **Payment Method:** (e.g., Wire Transfer, Check)
+                     *   **Governing Law:**
+                     *   **Termination Clause Summary:**
+                     *   **Confidentiality Clause Summary:**
+                     *   **Key Definitions:** (Extract and list any important defined terms in the contract)
+                
+                     Contract Document: %s
                 """;
         var userMessage = new UserMessage(userText.formatted(prompt));
         return chatModel.stream(userMessage);
